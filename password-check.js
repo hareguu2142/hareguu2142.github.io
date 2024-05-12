@@ -1,8 +1,8 @@
-function checkPassword() {
+async function checkPassword() {
     const inputPassword = document.getElementById("password").value;
     const encryptedPassword = "2c287c80f496e8f9f7e6e7e7e7e8e9f1"; // 암호화된 패스워드
 
-    if (sha256(inputPassword) === encryptedPassword) {
+    if (await sha256(inputPassword) === encryptedPassword) {
         document.getElementById("content").style.display = "block";
         document.getElementById("password-input").style.display = "none";
     } else {
@@ -11,10 +11,11 @@ function checkPassword() {
 }
 
 // SHA-256 해시 함수를 사용하여 입력을 암호화하는 함수
-function sha256(input) {
+async function sha256(input) {
     const encoder = new TextEncoder();
     const data = encoder.encode(input);
-    return crypto.subtle.digest("SHA-256", data).then(bufferToHex);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    return bufferToHex(hashBuffer);
 }
 
 function bufferToHex(buffer) {
