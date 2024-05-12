@@ -3,19 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Secure Page</title>
-    <script>
-        function checkPassword() {
-            const password = document.getElementById("password").value;
-            const correctPassword = "tjdwndurh";
-
-            if (password === correctPassword) {
-                document.getElementById("content").style.display = "block";
-                document.getElementById("password-input").style.display = "none";
-            } else {
-                alert("잘못된 패스워드입니다!");
-            }
-        }
-    </script>
+    <script src="password-check.js"></script>
     <style>
         #content {
             display: none;
@@ -26,7 +14,7 @@
     <div id="password-input">
         <label for="password">패스워드 입력:</label>
         <input type="password" id="password">
-        <button onclick="checkPassword()">확인</button>
+        <button onclick="checkPassword().then(() => {})">확인</button>
     </div>
     <div id="content">
         <h1>환영합니다!</h1>
