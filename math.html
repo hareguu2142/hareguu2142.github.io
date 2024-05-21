@@ -7,10 +7,34 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
         }
         .linked-text {
-            margin: 20px;
-            font-size: 16px;
+            margin: 10px;
+            padding: 15px;
+            background-color: #007bff;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .linked-text a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .linked-text:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        .linked-text:active {
+            transform: translateY(0);
         }
     </style>
 </head>
