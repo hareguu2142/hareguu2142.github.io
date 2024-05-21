@@ -6,25 +6,51 @@
 <style>
     body {
         font-family: Arial, sans-serif;
-        padding: 19px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        color: #333;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
     }
     .text-item {
         margin-bottom: 15px;
+        padding: 10px 20px;
+        background-color: #007bff;
+        border-radius: 5px;
+        transition: background-color 0.3s, transform 0.3s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .text-item a {
+        color: white;
+        text-decoration: none;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .text-item:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+    }
+    .text-item:active {
+        transform: translateY(0);
     }
 </style>
 </head>
 <body>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/11CuV5u4e9VmkKMJD3xfwAqfarSCxE4PR4mJxbQGTVpI/edit?usp=sharing" target="_blank">1-1-1</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/12hiPEQ8EFrDEr9hD1mW4sOL9K2fx0Pb4Omd60eNnFcI/edit?usp=sharing" target="_blank">1-1-2</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/1bcr2RF7mb-s5WX33M5B7fPEJN8Jc-NE8xcCypqqqP8k/edit?usp=sharing" target="_blank">1-2-3</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/14FuQR8OqVtvMrP2Z_hJc8Mc0oAHBM6toTJHoaAOqUwk/edit?usp=sharing" target="_blank">1-2-4</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/1IvKi74vU3J2xviSjcpG17SLiUYRq0D25Hn3WUprHDec/edit?usp=sharing" target="_blank">1-2-1</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/1gO9_QW5ud3Tfz5ADGOtiqUoY4_jW2vS33VeU07LId24/edit?usp=sharing" target="_blank">1-2-2</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/16lEoJTedRTj41OMrxMF7xv4bKsdQzzzWwTSTeCC6Q54/edit?usp=sharing" target="_blank">OT</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/1DM88OsvA732C8DWeJuAUcg6F6GYSVs7KWJWIoVKs9bM/edit?usp=sharing" target="_blank">2-1-1</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/1keJHTVANxYK_O_ZT8sIXgblh_1K-lR2rCrab6sAdaDY/edit?usp=sharing" target="_blank">2-1-2</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/1JChtVhP4Cbv_3dLLfXFWgJl13xTf-_3YBlGsQ9pEdK0/edit?usp=sharing" target="_blank">2-2-3</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/1nb8iOeDDIFJVk5sCB6qCCvHwMc5h-gnfX5RkSH9rnnU/edit?usp=sharing" target="_blank">2-2-1</a></div>
-<div class="text-item"><a href="https://docs.google.com/presentation/d/13jbguBYk1xZFsgh0RT6ZRAwE86E7Sbqzl6ZNnQ1zGng/edit?usp=sharing" target="_blank">2-2-2</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/11CuV5u4e9VmkKMJD3xfwAqfarSCxE4PR4mJxbQGTVpI/edit?usp=sharing" target="_blank">1-1-1</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/12hiPEQ8EFrDEr9hD1mW4sOL9K2fx0Pb4Omd60eNnFcI/edit?usp=sharing" target="_blank">1-1-2</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/1bcr2RF7mb-s5WX33M5B7fPEJN8Jc-NE8xcCypqqqP8k/edit?usp=sharing" target="_blank">1-2-3</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/14FuQR8OqVtvMrP2Z_hJc8Mc0oAHBM6toTJHoaAOqUwk/edit?usp=sharing" target="_blank">1-2-4</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/1IvKi74vU3J2xviSjcpG17SLiUYRq0D25Hn3WUprHDec/edit?usp=sharing" target="_blank">1-2-1</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/1gO9_QW5ud3Tfz5ADGOtiqUoY4_jW2vS33VeU07LId24/edit?usp=sharing" target="_blank">1-2-2</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/16lEoJTedRTj41OMrxMF7xv4bKsdQzzzWwTSTeCC6Q54/edit?usp=sharing" target="_blank">OT</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/1DM88OsvA732C8DWeJuAUcg6F6GYSVs7KWJWIoVKs9bM/edit?usp=sharing" target="_blank">2-1-1</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/1keJHTVANxYK_O_ZT8sIXgblh_1K-lR2rCrab6sAdaDY/edit?usp=sharing" target="_blank">2-1-2</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/1JChtVhP4Cbv_3dLLfXFWgJl13xTf-_3YBlGsQ9pEdK0/edit?usp=sharing" target="_blank">2-2-3</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/1nb8iOeDDIFJVk5sCB6qCCvHwMc5h-gnfX5RkSH9rnnU/edit?usp=sharing" target="_blank">2-2-1</a></div>
+    <div class="text-item"><a href="https://docs.google.com/presentation/d/13jbguBYk1xZFsgh0RT6ZRAwE86E7Sbqzl6ZNnQ1zGng/edit?usp=sharing" target="_blank">2-2-2</a></div>
 </body>
 </html>
