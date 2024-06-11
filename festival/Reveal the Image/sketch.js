@@ -44,7 +44,7 @@ function draw() {
   if (displayImageName) {
     fill(0);
     textAlign(CENTER, CENTER);
-    textSize(32);
+    textSize(128);
     text(currentImageName, width / 2, height / 2);
   }
 }
