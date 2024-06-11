@@ -15,7 +15,7 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(800, 600); // Adjust size as needed
+  createCanvas(1024, 768); // Adjust size as needed
   maskGraphics = createGraphics(width, height);
   selectNewImage();
   
