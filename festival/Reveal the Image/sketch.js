@@ -1,6 +1,6 @@
-let imagePaths = ["img/photo1.jpg"]; // Add more images as needed
+let imagePaths = ["img/photo1.jpg", "image/핸드폰.jpg"]; // Add more images as needed
 let images = [];
-let imageNames = ["Image 1"]; // Make sure the names match the order of imagePaths
+let imageNames = ["Image 1", "핸드폰"]; // Make sure the names match the order of imagePaths
 let currentImage;
 let currentImageName;
 let overlayColor;
