@@ -34,15 +34,14 @@
 <body onload="loadContent('home.html')">
 
 <div id="menuBar">
-  <a href="#" class="menuItem" onclick="loadContent('home.html')">홈</a>
-  <a href="#" class="menuItem" onclick="loadContent('Reveal the Image/Reveal the Image.html')">그림 추측</a>
+  <a href="#" class="menuItem" onclick="loadContent('home.html'); return false;">홈</a>
+  <a href="Reveal%20the%20Image/Reveal%20the%20Image.html" target="_blank" class="menuItem">그림 추측</a>
 </div>
 
 <div id="content">
 </div>
 
 <script>
-  
 function loadContent(fileName) {
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
