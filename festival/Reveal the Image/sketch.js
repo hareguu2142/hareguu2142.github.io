@@ -1,4 +1,4 @@
-let imagePaths = ["img/photo1.jpg", "img/핸드폰.jpg"]; // Add more images as needed
+let imagePaths = ["img/photo1.jpg", "img/phone.jpg"]; // Add more images as needed
 let images = [];
 let imageNames = ["Image 1", "핸드폰"]; // Make sure the names match the order of imagePaths
 let currentImage;
