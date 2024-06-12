@@ -20,7 +20,7 @@ function setup() {
   selectNewImage();
   
   // Single instance of the "Show Name" button
-  let showNameButton = createButton("Show Name");
+  let showNameButton = createButton("정답 확인");
   showNameButton.position(10, 10);
   showNameButton.mousePressed(() => {
     displayImageName = true;
@@ -28,7 +28,7 @@ function setup() {
   });
 
   // Single instance of the "New Image" button
-  let newImageButton = createButton("New Image");
+  let newImageButton = createButton("다른 그림");
   newImageButton.position(10, 40);
   newImageButton.mousePressed(() => {
     displayImageName = false;
