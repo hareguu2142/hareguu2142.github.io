@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>홈페이지 입구</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .main-image {
+      max-width: 100%;
+      max-height: 60vh;
+      object-fit: contain;
+      margin-bottom: 20px;
+    }
+
+    .tagline {
+      font-size: 24px;
+      color: #333;
+    }
+
+    .member-names span {
+      display: inline-block;
+      animation: fadeInUp 2s ease-in-out infinite;
+    }
+
+    .member-names span:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .member-names span:nth-child(2) {
+      animation-delay: 0.5s;
+    }
+
+    .member-names span:nth-child(3) {
+      animation-delay: 1s;
+    }
+
+    .member-names span:nth-child(4) {
+      animation-delay: 1.5s;
+    }
+
+    @keyframes fadeInUp {
+      0%, 100% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      20%, 80% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInOut {
+      0%, 100% {
+        opacity: 0;
+      }
+      20%, 80% {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img class="main-image" src="source/p5js.svg" alt="메인 이미지">
+    <p class="tagline">성주여자고등학교 프로그래밍 동아리</p>
+    <p class="member-names">
+      <span>성주여자</span>
+      <span>고등학교</span>
+      <span>프로그래밍</span>
+      <span>동아리</span>
+    </p>
+  </div>
+</body>
+</html>

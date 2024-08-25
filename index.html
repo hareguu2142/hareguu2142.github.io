@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Page</title>
+    <script src="password-check.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #password-input, #content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 90%;
+            box-sizing: border-box;
+        }
+        #password-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="password"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #content {
+            display: none;
+        }
+        #content h1 {
+            color: #007bff;
+        }
+        #content button {
+            margin: 10px;
+        }
+        #content img {
+            width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div id="password-input">
+        <label for="password">패스워드 입력:</label>
+        <input type="password" id="password">
+        <button onclick="checkPassword()">확인</button>
+    </div>
+    <div id="content">
+        <img src="오일러.webp" alt="오일러">
+        <h1>환영합니다.</h1>
+        <button onclick="location.href='math.html'">수학</button>
+        <button onclick="location.href='jungbo.html'">정보</button>
+        <button onclick="location.href='https://drive.google.com/drive/folders/1bStgEYam1rmE1RT8glctWKuSua-Nkb72?usp=drive_link'">자료</button>
+        <button onclick="location.href='https://maddening-produce-ef8.notion.site/6a1c473f225144bba4845a61542fec53?pvs=4'">링크</button>
+        <button onclick="location.href='festival/festival.html'">축제</button>
+        <button onclick="location.href='etc.html'">그 외</button>
+    </div>
+</body>
+</html>

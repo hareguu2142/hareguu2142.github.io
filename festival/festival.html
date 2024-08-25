@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<style>
+/* 메뉴바 스타일 */
+#menuBar {
+  width: 100%;
+  background: #ad5c5c;
+  overflow: auto;
+}
+
+/* 메뉴 아이템 스타일 */
+.menuItem {
+  float: left;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+  color: white;
+  background-color: #333;
+}
+
+.menuItem:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+/* 내용 창 스타일 */
+#content {
+  padding: 20px;
+  background-color: #f1f1f1;
+}
+</style>
+</head>
+<body onload="loadContent('home.html')">
+
+<div id="menuBar">
+  <a href="#" class="menuItem" onclick="loadContent('home.html'); return false;">홈</a>
+  <a href="#" class="menuItem" onclick="loadContent('Reveal%20the%20Image/Reveal%20the%20Image.html'); return false;">그림 추측</a>
+</div>
+
+<div id="content">
+  <iframe id="contentFrame" src="" style="width: 100%; height: 600px; border: none;"></iframe>
+</div>
+
+<script>
+function loadContent(fileName) {
+  document.getElementById("contentFrame").src = fileName;
+}
+</script>
+
+</body>
+</html>
