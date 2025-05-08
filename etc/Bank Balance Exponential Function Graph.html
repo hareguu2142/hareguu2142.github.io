@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>현상모델링탐구활동</title>
+<link href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
+<style>
+    body {
+        font-family: 'Noto Sans KR', Arial, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background-color: #fff0f0;
+        color: #4a0000;
+    }
+    .wrapper {
+        display: flex;
+        min-height: 100vh;
+        flex-direction: row;
+    }
+    .sidebar {
+        width: 250px;
+        background-color: #ff6b6b;
+        padding: 20px;
+        color: #ffffff;
+        flex-shrink: 0;
+        transition: transform 0.3s ease-in-out;
+    }
+    .sidebar.hidden {
+        transform: translateX(-100%);
+    }
+    .content {
+        flex: 1;
+        padding: 20px;
+        background-color: #fff5f5;
+    }
+    .header {
+        background-color: #ffa07a;
+        padding: 20px;
+        text-align: center;
+        color: #ffffff;
+    }
+    h1, h2 {
+        color: #8b0000;
+    }
+    .nav-link {
+        display: block;
+        padding: 10px;
+        color: #ffffff;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    .nav-link:hover {
+        background-color: #ff4500;
+    }
+    .input-container, .output-container {
+        background-color: #fff;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(255,0,0,0.1);
+    }
+    input[type="text"], input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ffd0d0;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    button {
+        background-color: #ff6b6b;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    button:hover {
+        background-color: #ff4500;
+    }
+    #output {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-x: auto;
+    }
+    .footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #ffa07a;
+        color: #ffffff;
+    }
+    @media (max-width: 768px) {
+        .wrapper {
+            flex-direction: column;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 1000;
+            transform: translateX(-100%);
+            width: 250px;
+        }
+        .sidebar.visible {
+            transform: translateX(0);
+        }
+        .content {
+            padding: 20px;
+        }
+        .header {
+            position: relative;
+        }
+        .menu-toggle {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background-color: #ff6b6b;
+            border: none;
+            color: #fff;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 18px;
+        }
+    }
+    .code-container {
+        position: relative;
+        margin-top: 30px;
+        background-color: #000000;
+        padding: 20px;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+    pre {
+        margin: 0;
+        font-family: 'Courier New', Courier, monospace;
+        color: #ffffff;
+    }
+    code {
+        font-family: 'Courier New', Courier, monospace;
+        color: #ffffff;
+    }
+    .copy-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        font-size: 12px;
+        background-color: #ff6b6b;
+        color: #fff;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, opacity 0.3s ease;
+        opacity: 0;
+    }
+    .code-container:hover .copy-btn {
+        opacity: 1;
+    }
+    .copy-btn:hover {
+        background-color: #ff4500;
+    }
+    .keyword {
+        color: #ff79c6;
+    }
+    .function {
+        color: #50fa7b;
+    }
+    .string {
+        color: #f1fa8c;
+    }
+    .math-container { /* KaTeX 렌더링된 수식을 감싸는 컨테이너 스타일 (필요시 추가) */
+        padding: 10px 0;
+        text-align: center; /* 수식을 중앙 정렬하고 싶을 경우 */
+    }
+</style>
+</head>
+<body>
+<div class="wrapper">
+<aside class="sidebar" id="sidebar">
+<nav>
+<a class="nav-link" href="/">홈</a>
+</nav>
+</aside>
+<main class="content">
+<header class="header">
+<button aria-label="메뉴 열기" class="menu-toggle" id="menu-toggle">☰</button>
+<h1>현상모델링탐구활동</h1>
+</header>
+
+<section class="input-container">
+    <h2>어떤 맥락에서 함수를 구성해보았나요?</h2>
+    <p>나는 통장 잔고(예금)의 변화를 수학적으로 표현해보기로 했다. 특히 일정한 이율로 돈을 예금하면 시간이 지남에 따라 잔고가 기하급수적으로 증가하게 되는데, 이때 지수함수를 이용할 수 있다.</p>
+    <p>따라서 시간(개월)을 독립변수 $x$로, 통장 잔고를 종속변수 $y$로 설정하고, 이를 지수함수로 모델링해보았다.</p>
+</section>
+
+<section class="output-container">
+    <h2>내가 만들어본 함수</h2>
+    <div class="math-container">$$y = 100 \cdot 2^x$$</div>
+</section>
+
+<section class="output-container">
+    <h2>만들어본 함수의 문제점</h2>
+    <ul>
+        <li><strong>문제점 1:</strong> $2^x$는 시간이 조금만 지나도 값이 너무 빠르게 증가한다. 실제 은행의 이자율은 매우 낮기 때문에, 이렇게 급격히 불어나는 모델은 현실적이지 않다.</li>
+        <li><strong>문제점 2:</strong> 초기 예금액이 100이라는 점은 좋지만, 1개월, 2개월 후의 잔고가 실제 은행 이자율에 비해 너무 크게 증가한다. 예를 들어 $x = 5$일 때 $y = 100 \cdot 2^5 = 3200$으로, 이는 비현실적이다.</li>
+    </ul>
+</section>
+
+<section class="output-container">
+    <h2>개선한 함수</h2>
+    <div class="math-container">$$y = 100 \cdot (1.01)^x$$</div>
+</section>
+
+<section class="output-container">
+    <h2>개선한 함수의 특징</h2>
+    <ul>
+        <li>$1.01$은 약 1%의 월 이자율을 의미한다. ($1.01 = 1 + 0.01$) 실제 은행에서 제공하는 월 복리 이자율과 유사하다.</li>
+        <li>시간이 지날수록 잔고가 점점 증가하되, 급격히 튀지 않고 현실적인 속도로 증가한다.</li>
+        <li>예금액이 작더라도 복리 효과로 인해 시간이 갈수록 점점 커지는 예금의 특징을 잘 반영하고 있다.</li>
+    </ul>
+</section>
+
+<section class="output-container">
+    <h2>각 시점별 통장 잔고 예시 (개선한 함수 $y = 100 \cdot (1.01)^x$)</h2>
+    <ul>
+        <li>$x = 0$개월: $y = 100 \cdot (1.01)^0 = 100.00$</li>
+        <li>$x = 1$개월: $y = 100 \cdot (1.01)^1 = 101.00$</li>
+        <li>$x = 2$개월: $y = 100 \cdot (1.01)^2 = 102.01$</li>
+        <li>$x = 3$개월: $y = 100 \cdot (1.01)^3 \approx 103.03$</li>
+        <li>$x = 6$개월: $y = 100 \cdot (1.01)^6 \approx 106.15$</li>
+        <li>$x = 12$개월: $y = 100 \cdot (1.01)^{12} \approx 112.68$</li>
+        <li>$x = 24$개월: $y = 100 \cdot (1.01)^{24} \approx 126.83$ (제공된 값)</li>
+    </ul>
+</section>
+
+<section class="output-container">
+    <h2>추가로 개선할 점</h2>
+    <ul>
+        <li>월 이율 1%도 실제 은행 이자보다는 다소 높은 편이다. 더 현실적인 모델을 원한다면, 0.3% 수준(즉, 밑을 $1.003$)으로 바꿀 수도 있다.</li>
+        <li>실제 상황에서는 세금, 수수료 등도 포함되므로, 그 요소도 추후 반영할 수 있다.</li>
+    </ul>
+</section>
+
+<section class="output-container">
+    <h2>최종적으로 개선한 함수와 그 특징</h2>
+    <div class="math-container">$$y = 100 \cdot (1.003)^x$$</div>
+    <ul>
+        <li>보다 현실적인 월 이자율(0.3%)을 반영했다.</li>
+        <li>예금액이 작더라도 장기적으로 복리 효과를 느낄 수 있다.</li>
+    </ul>
+</section>
+
+<section class="output-container">
+    <h2>최종적으로 개선한 함수의 특징2: 목표 잔고 도달 시간 계산</h2>
+    <p>개선된 함수 $y = 100 \cdot (1.003)^x$ 에서 특정 목표 잔고 $y$가 주어졌을 때 시간 $x$를 구하기 위해 다음과 같이 로그를 이용합니다.</p>
+    <div class="math-container">
+    $$
+    \begin{aligned}
+    y &= 100 \cdot (1.003)^x \\
+    \frac{y}{100} &= (1.003)^x \\
+    \text{양변에 밑이 } &1.003 \text{인 로그를 취하면,} \\
+    \log_{1.003}\left(\frac{y}{100}\right) &= \log_{1.003}((1.003)^x) \\
+    \log_{1.003}\left(\frac{y}{100}\right) &= x \\
+    \text{따라서, } x &= \log_{1.003}\left(\frac{y}{100}\right)
+    \end{aligned}
+    $$
+    </div>
+    <p>위 공식을 이용하여 목표 잔고 도달 시간을 계산할 수 있습니다.</p>
+</section>
+
+<section class="output-container">
+    <h2>각 목표 잔고별 도달 시간 계산 결과</h2>
+    <ul>
+        <li>
+            <strong>목표 잔고 $y = 150$ (원금의 1.5배) 도달 시간:</strong>
+            <div class="math-container">$$x = \log_{1.003}\left(\frac{150}{100}\right) = \log_{1.003}(1.5)$$</div>
+            <p>계산 결과: $x \approx 135.35$ 개월</p>
+            <p>약 11년 3개월 ($135.35 \div 12 \approx 11.28$년)이 지나면 초기 예금 100이 150이 될 것으로 예측됩니다.</p>
+        </li>
+        <li>
+            <strong>목표 잔고 $y = 200$ (원금의 2배) 도달 시간:</strong>
+            <div class="math-container">$$x = \log_{1.003}\left(\frac{200}{100}\right) = \log_{1.003}(2)$$</div>
+            <p>계산 결과: $x \approx 231.40$ 개월</p>
+            <p>원금이 두 배가 되기까지는 약 19년 3개월 ($231.40 \div 12 \approx 19.28$년)이 소요될 것으로 예측됩니다.</p>
+        </li>
+        <li>
+            <strong>목표 잔고 $y = 500$ (원금의 5배) 도달 시간:</strong>
+            <div class="math-container">$$x = \log_{1.003}\left(\frac{500}{100}\right) = \log_{1.003}(5)$$</div>
+            <p>계산 결과: $x \approx 537.28$ 개월</p>
+            <p>원금의 다섯 배를 달성하기 위해서는 약 44년 9개월 ($537.28 \div 12 \approx 44.77$년)이라는 매우 긴 시간이 필요함을 알 수 있습니다.</p>
+        </li>
+    </ul>
+</section>
+
+<footer class="footer">
+<p>현상모델링탐구활동</p>
+</footer>
+</main>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false}
+            ],
+            throwOnError: false // KaTeX 에러 발생 시 콘솔에만 오류를 표시하고 중단하지 않음
+        });
+    });
+
+    const clipboard = new ClipboardJS('.copy-btn');
+    clipboard.on('success', function(e) {
+        alert('코드가 클립보드에 복사되었습니다!');
+        e.clearSelection();
+    });
+    clipboard.on('error', function(e) {
+        alert('코드 복사에 실패했습니다.');
+    });
+
+    // 모바일 메뉴 토글 기능
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('visible');
+    });
+
+    // 사이드바 외부 클릭 시 닫기
+    document.addEventListener('click', (event) => {
+        // sidebar가 null이 아니고, 이벤트 타겟이 sidebar나 menuToggle 내부에 없을 때
+        if (sidebar && !sidebar.contains(event.target) && menuToggle && !menuToggle.contains(event.target)) {
+            sidebar.classList.remove('visible');
+        }
+    });
+</script>
+</body>
+</html>
