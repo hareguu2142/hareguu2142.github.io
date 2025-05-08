@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수행평가 안내</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+        h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        p, li {
+            font-size: 1.1em;
+            color: #555;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .task-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #fdfdff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .file-links a, .example-links a {
+            margin-right: 15px;
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            font-weight: normal;
+            transition: background-color 0.3s ease;
+        }
+        .file-links a:hover, .example-links a:hover {
+            background-color: #0056b3;
+            text-decoration: none;
+            color: white;
+        }
+        .submission-link a {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 5px;
+            font-size: 1.2em;
+            transition: background-color 0.3s ease;
+        }
+        .submission-link a:hover {
+            background-color: #218838;
+            text-decoration: none;
+            color: white;
+        }
+
+        /* Calendar Styles */
+        #calendar-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .calendar-header {
+            text-align: center;
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        table.calendar {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed; /* Ensures columns are of equal width */
+        }
+        table.calendar th, table.calendar td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            font-size: 1em;
+            height: 60px; /* Fixed height for cells */
+        }
+        table.calendar th {
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: bold;
+        }
+        table.calendar td.disabled {
+            color: #ccc;
+            background-color: #fdfdfd;
+        }
+        table.calendar td.task-day {
+            background-color: #ffe0b2; /* Light orange for task days */
+            font-weight: bold;
+            color: #e65100;
+            position: relative;
+        }
+        table.calendar td.task-day::after {
+            content: '과제';
+            font-size: 0.7em;
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #d84315;
+        }
+        table.calendar td.today {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            font-weight: bold;
+        }
+
+        /* QnA Section */
+        .qna-section dl {
+            margin-top: 20px;
+        }
+        .qna-section dt {
+            font-weight: bold;
+            color: #007bff;
+            font-size: 1.2em;
+            margin-top: 15px;
+        }
+        .qna-section dd {
+            margin-left: 0;
+            padding-left: 20px;
+            border-left: 3px solid #007bff;
+            margin-top: 5px;
+            background-color: #f8f9fa;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-radius: 0 5px 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>수행평가 안내</h1>
+
+        <div class="task-section">
+            <h2>수행평가 1 - 현상모델링탐구활동</h2>
+            <p>특정 상황을 잘 설명할 수 있는 함수를 만들고 이 함수에 대한 분석을 하는 과제입니다. 삼각함수, 지수함수, 로그함수를 이용하면 됩니다. 다양한 상황을 떠올려보고 창의적인 함수를 만들어보세요.</p>
+            <p class="file-links">
+                수행평가 양식 다운로드:
+                <a href="https://drive.google.com/file/d/1sDmngHk5zVKvTVFV2WMxyZZoWwE-D3js/view?usp=drive_link" target="_blank">hwp</a>
+                <a href="https://drive.google.com/file/d/118ldVF5rQNQM5xUFQ_t1WTMuQ8vK2Tns/view?usp=sharing" target="_blank">pdf</a>
+            </p>
+            <p class="example-links">
+                수행평가 예시 보기1:
+                <a href="https://docs.google.com/document/d/1IGLK3g341dqc8HL4lIgIGTnNd_mCEYOo36XpDkVvboI/edit?usp=sharing" target="_blank">doc</a>
+                <a href="https://hareguu2142.github.io/etc/phone-usage-modeling-exploration.html" target="_blank">html</a>
+            </p>
+            <p class="example-links">
+                수행평가 예시 보기2:
+                <a href="https://docs.google.com/document/d/1IGLK3g341dqc8HL4lIgIGTnNd_mCEYOo36XpDkVvboI/edit?tab=t.h74ogcnfb0k0" target="_blank">doc</a>
+                <a href="http://hareguu2142.github.io/etc/Bank%20Balance%20Exponential%20Function%20Graph.html" target="_blank">html</a>
+            </p>
+        </div>
+
+        <div class="task-section">
+            <h2>수행평가 2 - 귀납적패턴분석</h2>
+            <p>수열을 창작해보고, 이 수열에 대한 분석을 하는 과제입니다.</p>
+            <p class="file-links">
+                수행평가 양식 다운로드:
+                <a href="https://drive.google.com/file/d/1aXFU7F5Diqfz-D-JFX4dzp1vvyXH4cLv/view?usp=drive_link" target="_blank">hwp</a>
+                <a href="https://drive.google.com/file/d/1P4dlBjW_H2XJG3Wu4xnoNhf9cu7jHsJm/view?usp=drive_link" target="_blank">pdf</a>
+            </p>
+            <p class="example-links">
+                수행평가 예시 보기:
+                <a href="https://docs.google.com/document/d/1IGLK3g341dqc8HL4lIgIGTnNd_mCEYOo36XpDkVvboI/edit?tab=t.xoren47vmhx3" target="_blank">doc</a>
+                <a href="http://hareguu2142.github.io/etc/array_sequence.html" target="_blank">html</a>
+            </p>
+        </div>
+
+        <div class="task-section">
+            <h2>제출 방법</h2>
+            <p>아래 링크로 들어갑니다.</p>
+            <p class="submission-link"><a href="https://script.google.com/macros/s/AKfycbxXdKyesMhMS0JDGzTFJJ7e2i-m1Fo9n8vuCh5xi2qPU5uXhyW29TELJJB0KtSRtD-_/exec" target="_blank">제출 링크로 이동</a></p>
+            <p>이름, 반, 번호를 입력하고 과정형 평가 이름을 선택합니다.</p>
+            <p>파일을 선택합니다.(파일 제출은 한개만 할 수 있음)</p>
+            <p>과제가 제출되었는지 확인하려면 이메일 주소를 입력하면 됩니다.</p>
+        </div>
+
+        <div class="task-section">
+            <h2>제출기한</h2>
+            <p>6월 16일 ~ 6월 20일의 수학I 시간에 멀티미디어실에서 과제를 진행합니다.</p>
+            <div id="calendar-container">
+                <div class="calendar-header">2025년 6월</div>
+                <table class="calendar" id="june-calendar">
+                    <thead>
+                        <tr>
+                            <th>일</th>
+                            <th>월</th>
+                            <th>화</th>
+                            <th>수</th>
+                            <th>목</th>
+                            <th>금</th>
+                            <th>토</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Calendar days will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="task-section qna-section">
+            <h2>QnA</h2>
+            <dl>
+                <dt>Q1. 꼭 한글파일로 제출해야하나요?</dt>
+                <dd>A1. 양식만 지키면 뭐든 괜찮습니다. 종이에 써서 사진을 찍어도 괜찮습니다.</dd>
+
+                <dt>Q2. 분량은 어느정도로 해야하나요?</dt>
+                <dd>A2. 왠만하면 분량이 적더라도, 점수를 주려고 할 것입니다. 제가 적은 예시만큼만 적어도 매우 충분합니다.</dd>
+                
+                <dt>Q3.</dt>
+                <dd><!-- A3. 내용을 여기에 추가하세요. --></dd>
+            </dl>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            generateCalendar(2025, 5); // 0-indexed month for JavaScript Date (5 = June)
+        });
+
+        function generateCalendar(year, month) {
+            const calendarBody = document.getElementById('june-calendar').getElementsByTagName('tbody')[0];
+            calendarBody.innerHTML = ''; // Clear previous calendar
+
+            const today = new Date();
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+            const startingDay = firstDayOfMonth.getDay(); // 0 (Sun) to 6 (Sat)
+
+            // Task days
+            const taskStartDay = 16;
+            const taskEndDay = 20;
+
+            let date = 1;
+            for (let i = 0; i < 6; i++) { // Max 6 weeks in a month
+                let row = calendarBody.insertRow();
+                if (i === 0 && date > daysInMonth) break; // Avoid empty first week if month already ended (should not happen with max 6 weeks)
+
+                for (let j = 0; j < 7; j++) {
+                    let cell = row.insertCell();
+                    if (i === 0 && j < startingDay) {
+                        // Empty cells before the first day of the month
+                        cell.classList.add('disabled');
+                    } else if (date > daysInMonth) {
+                        // Empty cells after the last day of the month
+                        cell.classList.add('disabled');
+                    } else {
+                        cell.textContent = date;
+                        if (year === today.getFullYear() && month === today.getMonth() && date === today.getDate()) {
+                            cell.classList.add('today');
+                        }
+                        if (date >= taskStartDay && date <= taskEndDay) {
+                            cell.classList.add('task-day');
+                        }
+                        date++;
+                    }
+                }
+                if (date > daysInMonth && i > 0) break; // Stop if all dates are filled
+            }
+        }
+    </script>
+</body>
+</html>
