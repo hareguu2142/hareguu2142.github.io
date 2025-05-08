@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>귀납적패턴분석</title>
+<link href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
+<style>
+    body {
+        font-family: 'Noto Sans KR', Arial, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background-color: #fff0f0;
+        color: #4a0000;
+    }
+    .wrapper {
+        display: flex;
+        min-height: 100vh;
+        flex-direction: row;
+    }
+    .sidebar {
+        width: 250px;
+        background-color: #ff6b6b;
+        padding: 20px;
+        color: #ffffff;
+        flex-shrink: 0;
+        transition: transform 0.3s ease-in-out;
+    }
+    .sidebar.hidden {
+        transform: translateX(-100%);
+    }
+    .content {
+        flex: 1;
+        padding: 20px;
+        background-color: #fff5f5;
+    }
+    .header {
+        background-color: #ffa07a;
+        padding: 20px;
+        text-align: center;
+        color: #ffffff;
+    }
+    h1, h2, h3 {
+        color: #8b0000;
+    }
+    .nav-link {
+        display: block;
+        padding: 10px;
+        color: #ffffff;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    .nav-link:hover {
+        background-color: #ff4500;
+    }
+    .input-container, .output-container { /* Using output-container for content sections */
+        background-color: #fff;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(255,0,0,0.1);
+    }
+    input[type="text"], input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ffd0d0;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    button {
+        background-color: #ff6b6b;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    button:hover {
+        background-color: #ff4500;
+    }
+    #output { /* This ID might be unused if content is structured in sections */
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-x: auto;
+    }
+    .footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #ffa07a;
+        color: #ffffff;
+    }
+    @media (max-width: 768px) {
+        .wrapper {
+            flex-direction: column;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 1000;
+            transform: translateX(-100%);
+            width: 250px;
+        }
+        .sidebar.visible {
+            transform: translateX(0);
+        }
+        .content {
+            padding: 20px;
+        }
+        .header {
+            position: relative;
+        }
+        .menu-toggle {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background-color: #ff6b6b;
+            border: none;
+            color: #fff;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 18px;
+        }
+    }
+    /* Removed .code-container styles as they are not used in the user's content */
+</style>
+</head>
+<body>
+<div class="wrapper">
+<aside class="sidebar" id="sidebar">
+<nav>
+<a class="nav-link" href="/">홈</a>
+<a class="nav-link" href="#recurrence1">점화식 1</a>
+<a class="nav-link" href="#recurrence2">점화식 2</a>
+</nav>
+</aside>
+<main class="content">
+<header class="header">
+<button aria-label="메뉴 열기" class="menu-toggle" id="menu-toggle">☰</button>
+<h1>귀납적패턴분석</h1>
+</header>
+
+<section class="output-container" id="recurrence1">
+<h2>내가 만든 점화식1</h2>
+<p>$$2a_{n+2}=a_n, \quad a_1=1, a_2=2$$</p>
+
+<h3>점화식1 분석하기</h3>
+<p>이 점화식을 $a_1$부터 나열하면 $1, 2, 1/2, 1, 1/4, 1/2, 1/8, 1/4, 1/16, 1/8, \dots$이 된다.</p>
+<p>이 수열의 특징은 홀수항들($a_1, a_3, a_5, \dots$)과 짝수항들($a_2, a_4, a_6, \dots$)이 각각 공비가 $1/2$인 등비수열을 이룹니다.
+(원문: "짝수항과 홀수항이 따로따로 등비가 2인 등비수열을 이룬다." 이는 $a_n = 2 a_{n+2}$로 해석될 수 있으나, 일반적인 공비의 정의 $a_{n+2}/a_n = 1/2$를 따릅니다.)
+</p>
+
+<h3>점화식1의 1항부터 10항까지의 합</h3>
+<p>이 수열의 특징은 짝수항과 홀수항이 따로따로 공비가 $1/2$인 등비수열을 이룹니다.</p>
+<p>1항부터 10항까지의 합을 구하기 위해 짝수항과 홀수항들의 합을 나누어서 구해볼 것입니다.</p>
+<p>홀수항은 $a_1, a_3, a_5, a_7, a_9$로 5개이며, 첫째항은 $a_1=1$, 공비는 $1/2$입니다.</p>
+<p>홀수항들의 합:
+$$S_{홀수} = \frac{1 \cdot (1-(1/2)^5)}{1-1/2} = \frac{1 - 1/32}{1/2} = 2 \cdot \frac{31}{32} = \frac{31}{16}$$
+</p>
+<p>짝수항은 $a_2, a_4, a_6, a_8, a_{10}$로 5개이며, 첫째항은 $a_2=2$, 공비는 $1/2$입니다.</p>
+<p>짝수항들의 합:
+$$S_{짝수} = \frac{2 \cdot (1-(1/2)^5)}{1-1/2} = \frac{2(1 - 1/32)}{1/2} = 4 \cdot \frac{31}{32} = \frac{31}{8}$$
+</p>
+<p>따라서 1항부터 10항까지의 총합은 다음과 같습니다:
+$$S_{10} = S_{홀수} + S_{짝수} = \frac{31}{16} + \frac{31}{8} = \frac{31}{16} + \frac{62}{16} = \frac{93}{16}$$
+</p>
+</section>
+
+<section class="output-container" id="recurrence2">
+<h2>내가 만든 점화식2</h2>
+<p>$$a_{a_n}=a_n$$</p>
+
+<h3>점화식2 분석하기</h3>
+<p>$a_{a_n}=a_n$에 대해 분석해보도록 해보자.</p>
+<p>예를 들어 $n=1$을 대입하면, $a_{a_1}=a_1$이 된다. 즉, $a_1$은 $a_{a_1}$과 같다.</p>
+<p>모든 자연수에 대하여 $a_{a_n}=a_n$을 만족하는 수열이 실제로 존재할까?</p>
+<p>실제로 존재한다. 예를 들어 모든 자연수 $n$에 대하여 $a_n=1$을 만족하는 수열은 $a_{a_n}=a_1=1$이므로, $a_{a_n}=a_n$도 만족한다.</p>
+<p>또다른 수열에는 무엇이 있을까? </p>
+<p>예를 들어, 홀수번째 항은 $a_{2k-1}=5$ ($k \ge 1$), 짝수번째 항은 $a_{2k}=6$ ($k \ge 1$) 처럼, $5, 6, 5, 6, \dots$이 반복되는 수열을 생각해보자.
+    <ul>
+        <li>$n$이 홀수일 때: $a_n=5$. 그러면 $a_{a_n}=a_5$. $5$는 홀수이므로 $a_5=5$. 따라서 $a_{a_n}=a_n$.</li>
+        <li>$n$이 짝수일 때: $a_n=6$. 그러면 $a_{a_n}=a_6$. $6$은 짝수이므로 $a_6=6$. 따라서 $a_{a_n}=a_n$.</li>
+    </ul>
+    이 수열은 $a_{a_n}=a_n$을 만족한다.
+</p>
+<p>더 깊게 들어가면, 모든 항에 대하여 $a_{a_n}=a_n$을 만족한다고 가정했을때, $a_n=k$으로 치환하면 $a_k = k$가 되어야한다. 즉, 수열의 치역에 속하는 임의의 값 $k$에 대하여 $k$번째 항의 값($a_k$)이 $k$가 되어야 한다.</p>
+<p>$n=1,2,3,\dots,100$에 대하여 $a_n=n$이고, $a_{n+100}=a_n$인 수열 (즉, $a_n = ( (n-1) \pmod{100} ) + 1$)은 $a_{a_n}=a_n$을 만족하는지 확인해보자.</p>
+<p>이 수열에서 모든 항의 값 $a_n$은 $1$부터 $100$ 사이의 자연수이다.
+    $a_n = k$라고 하면, $k \in \{1, 2, \dots, 100\}$이다.
+    이때 $a_{a_n} = a_k$가 된다. 정의에 의해 $k \le 100$이므로 $a_k = k$이다.
+    따라서 $a_{a_n} = a_k = k = a_n$이 성립한다.
+</p>
+<p>예를들어 $n=2025$면, $2025 = 100 \times 20 + 25$이므로, $a_{2025}=a_{25}=25$이다.
+그리고 $a_{a_{2025}} = a_{25}$. $a_{25}=25$이므로, $a_{a_{2025}}=25$이다.
+따라서 $a_{a_{2025}}=a_{2025}$ (즉, $25=25$)가 성립한다.
+</p>
+
+<h3>점화식2의 1항부터 10항까지의 합</h3>
+<p>위에서 예시로 든 주기수열 $a_n = ( (n-1) \pmod{100} ) + 1$의 경우, $n=1,2,3,\dots,10$에 대하여 $a_n=n$이므로, 1항부터 10항까지의 합은 다음과 같다:
+$$S_{10} = 1+2+\dots+10 = \frac{10 \times (10+1)}{2} = \frac{10 \times 11}{2} = 55$$
+</p>
+</section>
+
+<footer class="footer">
+<p>귀납적패턴분석</p>
+</footer>
+</main>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false}
+            ]
+        });
+    });
+
+    // ClipboardJS는 코드 복사 버튼이 없으므로 현재 페이지에서는 직접 사용되지 않지만,
+    // 필요시 .copy-btn 클래스와 data-clipboard-target 속성을 가진 버튼을 추가하면 활성화됩니다.
+    // const clipboard = new ClipboardJS('.copy-btn');
+    // clipboard.on('success', function(e) {
+    //     alert('코드가 클립보드에 복사되었습니다!');
+    //     e.clearSelection();
+    // });
+    // clipboard.on('error', function(e) {
+    //     alert('코드 복사에 실패했습니다.');
+    // });
+
+    // 모바일 메뉴 토글 기능
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('visible');
+    });
+
+    // 사이드바 외부 클릭 시 닫기
+    document.addEventListener('click', (event) => {
+        const isClickInsideSidebar = sidebar.contains(event.target);
+        const isClickOnMenuToggle = menuToggle.contains(event.target);
+
+        if (!isClickInsideSidebar && !isClickOnMenuToggle && sidebar.classList.contains('visible')) {
+            sidebar.classList.remove('visible');
+        }
+    });
+</script>
+</body>
+</html>
