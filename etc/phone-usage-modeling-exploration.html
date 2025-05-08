@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>현상모델링탐구활동</title>
+<link href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
+<style>
+    body {
+        font-family: 'Noto Sans KR', Arial, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background-color: #fff0f0;
+        color: #4a0000;
+    }
+    .wrapper {
+        display: flex;
+        min-height: 100vh;
+        flex-direction: row;
+    }
+    .sidebar {
+        width: 250px;
+        background-color: #ff6b6b;
+        padding: 20px;
+        color: #ffffff;
+        flex-shrink: 0;
+        transition: transform 0.3s ease-in-out;
+    }
+    .sidebar.hidden {
+        transform: translateX(-100%);
+    }
+    .content {
+        flex: 1;
+        padding: 20px;
+        background-color: #fff5f5;
+    }
+    .header {
+        background-color: #ffa07a;
+        padding: 20px;
+        text-align: center;
+        color: #ffffff;
+    }
+    h1, h2, h3 {
+        color: #8b0000;
+    }
+    .nav-link {
+        display: block;
+        padding: 10px;
+        color: #ffffff;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    .nav-link:hover {
+        background-color: #ff4500;
+    }
+    .content-section { /* 기존 input-container, output-container 대신 사용 */
+        background-color: #fff;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(255,0,0,0.1);
+    }
+    input[type="text"], input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ffd0d0;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    button {
+        background-color: #ff6b6b;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    button:hover {
+        background-color: #ff4500;
+    }
+    .footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #ffa07a;
+        color: #ffffff;
+    }
+    @media (max-width: 768px) {
+        .wrapper {
+            flex-direction: column;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 1000;
+            transform: translateX(-100%);
+            width: 250px;
+        }
+        .sidebar.visible {
+            transform: translateX(0);
+        }
+        .content {
+            padding: 20px;
+        }
+        .header {
+            position: relative;
+        }
+        .menu-toggle {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background-color: #ff6b6b;
+            border: none;
+            color: #fff;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 18px;
+        }
+    }
+    /* KaTeX display mode centering */
+    .katex-display {
+        text-align: center;
+        margin: 1em 0;
+    }
+    ul {
+        list-style-position: inside;
+        padding-left: 20px;
+    }
+    li {
+        margin-bottom: 0.5em;
+    }
+</style>
+</head>
+<body>
+<div class="wrapper">
+<aside class="sidebar" id="sidebar">
+<nav>
+<a class="nav-link" href="#">탐구 활동 목차 (예시)</a>
+<!-- 필요한 경우 여기에 네비게이션 링크 추가 -->
+</nav>
+</aside>
+<main class="content">
+<header class="header">
+<button aria-label="메뉴 열기" class="menu-toggle" id="menu-toggle">☰</button>
+<h1>현상모델링탐구활동: 휴대폰 사용 시간 패턴 분석</h1>
+</header>
+
+<section class="content-section">
+<h2>어떤 맥락에서 함수를 구성해보았나요?</h2>
+<p>나의 휴대폰 사용 시간 패턴을 나타내는 함수를 창작해보기로 했습니다. 보통 일주일을 기준으로 사용패턴이 반복되기 때문에, 주기함수 중 하나인 삼각함수를 이용해보기로 합니다.</p>
+<p>$x$를 요일로 두고, $y$를 사용 시간(분)으로 설정합니다.</p>
+</section>
+
+<section class="content-section">
+<h2>내가 만들어본 함수</h2>
+$$y = \sin(x)$$
+<h2>만들어본 함수의 문제점</h2>
+<p><strong>문제점 1:</strong> 보통 사람의 활동은 일주일을 기준으로 반복되는 경우가 많지만, $y=\sin(x)$의 주기는 $2\pi$이므로 일주일씩 반복되지 않습니다. 일주일이 반복되도록 주기를 바꾸어야 합니다.</p>
+<p><strong>문제점 2:</strong> $x$값에 따라, $y$가 음수가 되는 경우가 발생하여 현실적이지 않습니다. 사용 시간은 항상 0보다 크거나 같아야 합니다.</p>
+</section>
+
+<section class="content-section">
+<h2>개선한 함수</h2>
+$$y = 20 \sin\left(\frac{2\pi x}{7}\right) + 20$$
+<h2>개선한 함수의 특징</h2>
+<p>$x$가 요일을 나타낼 수 있도록, $x$ 대신에 $\frac{x}{7}$를 사용했습니다. (정확히는 주기 조정을 위해 $x$에 $\frac{2\pi}{7}$를 곱함). 그리고 음수가 나오지 않도록 최솟값을 조정하기 위해 20을 더했습니다. 각 요일마다의 휴대폰 사용시간을 계산하기 위해, $x$에 값을 집어 넣어 근삿값을 계산해보았습니다.</p>
+<h3>요일별 휴대폰 사용시간 계산:</h3>
+<ul>
+    <li>월요일 ($x = 1$): $y = 20\sin\left(\frac{2\pi \cdot 1}{7}\right) + 20 \approx 20(0.782) + 20 = 15.64 + 20 = 35.64$ 분</li>
+    <li>화요일 ($x = 2$): $y = 20\sin\left(\frac{2\pi \cdot 2}{7}\right) + 20 \approx 20(0.975) + 20 = 19.50 + 20 = 39.50$ 분</li>
+    <li>수요일 ($x = 3$): $y = 20\sin\left(\frac{2\pi \cdot 3}{7}\right) + 20 \approx 20(0.434) + 20 = 8.68 + 20 = 28.68$ 분</li>
+    <li>목요일 ($x = 4$): $y = 20\sin\left(\frac{2\pi \cdot 4}{7}\right) + 20 \approx 20(-0.434) + 20 = -8.68 + 20 = 11.32$ 분</li>
+    <li>금요일 ($x = 5$): $y = 20\sin\left(\frac{2\pi \cdot 5}{7}\right) + 20 \approx 20(-0.975) + 20 = -19.50 + 20 = 0.50$ 분</li>
+    <li>토요일 ($x = 6$): $y = 20\sin\left(\frac{2\pi \cdot 6}{7}\right) + 20 \approx 20(-0.782) + 20 = -15.64 + 20 = 4.36$ 분</li>
+    <li>일요일 ($x = 7$ 또는 $x=0$): $y = 20\sin\left(\frac{2\pi \cdot 7}{7}\right) + 20 = 20\sin(2\pi) + 20 = 20(0) + 20 = 20.00$ 분</li>
+</ul>
+<p>이 함수는 금요일에 약 0.5분으로 가장 적은 시간 동안 휴대폰을 사용했음을 표현하고 있습니다. 그리고 화요일에 약 39.5분으로 가장 많은 시간 동안 휴대폰을 사용했음을 표현하고 있습니다.</p>
+</section>
+
+<section class="content-section">
+<h2>추가로 개선할 점</h2>
+<p>휴대폰 사용시간이 너무 적게 나왔습니다. 최소 사용 시간 및 평균 사용 시간이 현실보다 낮습니다.</p>
+</section>
+
+<section class="content-section">
+<h2>최종적으로 개선한 함수와 그 특징</h2>
+$$y = 20\sin\left(\frac{2\pi x}{7}\right) + 60$$
+<p>기존 함수 $y = 20\sin\left(\frac{2\pi x}{7}\right) + 20$ 에서 y절편(평균 이동)을 20에서 60으로 변경했습니다. 즉, 60을 더해줌으로써, 기본적인 휴대폰 사용시간을 현실적으로 바꾸었습니다. 이 함수에 따르면 휴대폰 사용 시간은 최소 $20(-1) + 60 = 40$분, 최대 $20(1) + 60 = 80$분, 평균 60분이 됩니다. 이는 하루에 최소 약 40분에서 최대 약 1시간 20분 정도 사용하는 패턴을 나타냅니다.</p>
+<p>예를 들어, 이 함수에 따르면 화요일($x=2$)의 사용 시간은 $y \approx 20(0.975) + 60 = 19.5 + 60 = 79.5$분이 됩니다.</p>
+</section>
+
+<footer class="footer">
+<p>현상모델링탐구활동</p>
+</footer>
+</main>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false}
+            ]
+        });
+    });
+
+    // 모바일 메뉴 토글 기능
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('visible');
+            // 사이드바가 나타날 때 hidden 클래스도 제거해야 할 수 있음 (초기 상태에 따라)
+            sidebar.classList.remove('hidden'); 
+        });
+
+        // 사이드바 외부 클릭 시 닫기
+        document.addEventListener('click', (event) => {
+            // sidebar가 null이 아니고, 이벤트 타겟이 sidebar나 menuToggle 내부에 있지 않을 때
+            if (sidebar && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+                sidebar.classList.remove('visible');
+            }
+        });
+    }
+
+    // ClipboardJS (코드 복사 기능이 필요하다면 여기에 설정)
+    // const clipboard = new ClipboardJS('.copy-btn');
+    // clipboard.on('success', function(e) {
+    //     alert('코드가 클립보드에 복사되었습니다!');
+    //     e.clearSelection();
+    // });
+    // clipboard.on('error', function(e) {
+    //     alert('코드 복사에 실패했습니다.');
+    // });
+</script>
+</body>
+</html>
