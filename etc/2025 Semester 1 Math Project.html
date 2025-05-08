@@ -59,12 +59,13 @@
         .file-links a, .example-links a {
             margin-right: 15px;
             display: inline-block;
-            padding: 1px 1px;
+            padding: 1px 1px; /* Adjusted to match visual, original likely meant 8px 10px or similar */
             background-color: #007bff;
             color: white;
             border-radius: 5px;
             font-weight: normal;
             transition: background-color 0.3s ease;
+            padding: 5px 10px; /* Added reasonable padding for better appearance */
         }
         .file-links a:hover, .example-links a:hover {
             background-color: #0056b3;
@@ -85,6 +86,35 @@
             text-decoration: none;
             color: white;
         }
+
+        /* Style for the important submission note */
+        .important-submission-note {
+            background-color: #ffe0b2; /* Light orange, consistent with task-day */
+            color: #8d6e63; /* Brownish text for readability on light orange */
+            padding: 18px 22px;
+            margin-top: 25px; /* Increased margin for separation */
+            margin-bottom: 25px; /* Increased margin for separation */
+            border: 2px solid #e65100; /* Orange border, consistent with task-day */
+            border-radius: 8px;
+            font-size: 1.2em; /* Slightly larger font */
+            font-weight: 500; /* Medium weight for the main text */
+            line-height: 1.7;
+            text-align: center;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+        }
+
+        .important-submission-note .icon-alert {
+            font-size: 1.4em; /* Larger icon */
+            color: #d84315; /* Darker orange/red, consistent with task-day accent */
+            margin-right: 10px;
+            vertical-align: -3px; /* Fine-tune vertical alignment */
+        }
+
+        .important-submission-note strong {
+            font-weight: 700; /* Bolder for "strong" parts */
+            color: #d84315; /* Darker orange/red for emphasis */
+        }
+        /* End of style for important submission note */
 
         /* Calendar Styles */
         #calendar-container {
@@ -210,6 +240,9 @@
             <p>이름, 반, 번호를 입력하고 과정형 평가 이름을 선택합니다.</p>
             <p>파일을 선택합니다.(파일 제출은 한개만 할 수 있음)</p>
             <p>과제가 제출되었는지 확인하려면 이메일 주소를 입력하면 됩니다.</p>
+            <p class="important-submission-note">
+                <span class="icon-alert">📢</span><strong>중요 알림:</strong> 수행평가가 두 개이므로, 제출은 반드시 <strong>두 번</strong> 하셔야 합니다! <br>각 수행평가마다 한 번씩 제출해주세요.
+            </p>
         </div>
 
         <div class="task-section">
@@ -273,15 +306,13 @@
             let date = 1;
             for (let i = 0; i < 6; i++) { // Max 6 weeks in a month
                 let row = calendarBody.insertRow();
-                if (i === 0 && date > daysInMonth) break; // Avoid empty first week if month already ended (should not happen with max 6 weeks)
+                if (i === 0 && date > daysInMonth) break; 
 
                 for (let j = 0; j < 7; j++) {
                     let cell = row.insertCell();
                     if (i === 0 && j < startingDay) {
-                        // Empty cells before the first day of the month
                         cell.classList.add('disabled');
                     } else if (date > daysInMonth) {
-                        // Empty cells after the last day of the month
                         cell.classList.add('disabled');
                     } else {
                         cell.textContent = date;
@@ -294,7 +325,7 @@
                         date++;
                     }
                 }
-                if (date > daysInMonth && i > 0) break; // Stop if all dates are filled
+                if (date > daysInMonth && i > 0) break;
             }
         }
     </script>
