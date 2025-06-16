@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>귀납적 패턴 분석</title>
+    <link href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
+    <style>
+        body { font-family: 'Noto Sans KR', Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #fff0f0; color: #4a0000; }
+        .wrapper { display: flex; min-height: 100vh; flex-direction: row; }
+        .sidebar { width: 250px; background-color: #ff6b6b; padding: 20px; color: #ffffff; flex-shrink: 0; transition: transform 0.3s ease-in-out; }
+        .sidebar.hidden { transform: translateX(-100%); }
+        .content { flex: 1; padding: 20px; background-color: #fff5f5; }
+        .header { background-color: #ffa07a; padding: 20px; text-align: center; color: #ffffff; }
+        h1, h2, h3 { color: #8b0000; }
+        .nav-link { display: block; padding: 10px; color: #ffffff; text-decoration: none; transition: background-color 0.3s; }
+        .nav-link:hover { background-color: #ff4500; }
+        .output-container { background-color: #fff; padding: 20px; margin: 20px 0; border-radius: 5px; box-shadow: 0 2px 5px rgba(255,0,0,0.1); }
+        .footer { text-align: center; padding: 20px; background-color: #ffa07a; color: #ffffff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ffddd2; padding: 8px; text-align: left; }
+        th { background-color: #ffe4e1; }
+        @media (max-width: 768px) {
+            .wrapper { flex-direction: column; }
+            .sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 1000; transform: translateX(-100%); width: 250px; }
+            .sidebar.visible { transform: translateX(0); }
+            .content { padding: 20px; }
+            .header { position: relative; }
+            .menu-toggle { position: absolute; left: 20px; top: 20px; background-color: #ff6b6b; border: none; color: #fff; padding: 10px; cursor: pointer; border-radius: 4px; font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <aside class="sidebar" id="sidebar">
+        <nav>
+            <a class="nav-link" href="#sequence1">수열1: 발산하는 등차수열</a>
+            <a class="nav-link" href="#sequence2">수열2: 수렴하는 망원급수</a>
+        </nav>
+    </aside>
+    <main class="content">
+        <header class="header">
+            <button aria-label="메뉴 열기" class="menu-toggle" id="menu-toggle">☰</button>
+            <h1>귀납적 패턴 분석</h1>
+        </header>
+
+
+        <section class="output-container" id="sequence1">
+            <h2>수열1: 발산하는 등차수열 \(a_n = n + 2\)</h2>
+            <h3>수열의 정의와 항</h3>
+            <p>이 수열의 일반항은 \(a_n = n + 2\)로 정의됩니다. 각 항은 이전 항보다 1만큼 큽니다. 이러한 수열을 <strong>공차가 1인 등차수열</strong>이라고 부릅니다.</p>
+            <p>첫 10개 항을 나열하면 다음과 같습니다:</p>
+            <p>\(a_1=3, a_2=4, a_3=5, a_4=6, a_5=7, a_6=8, a_7=9, a_8=10, a_9=11, a_{10}=12, \dots\)</p>
+            <h3>수열의 변화</h3>
+            <p>\(n\)이 커짐에 따라 항의 값(\(a_n\))도 계속해서 커집니다. 항의 값이 특정 상수에 가까워지지 않고 무한히 증가하므로 이 수열은 <strong>끝없이 커집니다</strong>.</p>
+            <p>수학적으로는 \(\lim_{n \to \infty} (n+2) = \infty\) 와 같이 표현합니다.</p>
+           
+            <h3>부분합 분석</h3>
+            <p>부분합 \(S_N\)은 첫째항부터 \(N\)번째 항까지의 합을 의미합니다. 즉, \(S_N = \sum_{n=1}^{N} a_n\) 입니다.</p>
+            <p><strong>1항부터 10항까지의 합 (\(S_{10}\)):</strong></p>
+            <p>\[ S_{10} = \sum_{n=1}^{10} (n+2) = \left(\sum_{n=1}^{10} n\right) + \left(\sum_{n=1}^{10} 2\right) \]
+            \[ = \frac{10(10+1)}{2} + (2 \times 10) = 55 + 20 = 75. \]</p>
+           
+            <p><strong>일반적인 N항까지의 합 (\(S_N\)):</strong></p>
+            <p>\[ S_N = \sum_{n=1}^{N} (n+2) = \left(\sum_{n=1}^{N} n\right) + \left(\sum_{n=1}^{N} 2\right) \]
+            \[ = \frac{N(N+1)}{2} + 2N = \frac{N^2+N+4N}{2} = \frac{N^2 + 5N}{2}. \]</p>
+            <p>부분합 \(S_N\)은 \(N\)에 대한 2차식으로, \(N\)이 커질수록 그 값 또한 무한히 커집니다. 따라서 이 수열의 급수(무한합)는 <strong>끝없이 커집니다</strong>.</p>
+        </section>
+
+        <section class="output-container" id="sequence2">
+            <h2>수열2: 수렴하는 망원급수 \(a_n = \frac{1}{(n+1)(n+2)}\)</h2>
+            <h3>수열의 정의와 항</h3>
+            <p>이 수열의 일반항은 \(a_n = \frac{1}{(n+1)(n+2)}\)로 정의됩니다. 각 항은 인접한 두 항의 곱의 역수로 표현됩니다. 이 수열의 항은 <strong>부분분수 분해를 통해 합이 소거되는 망원급수(telescoping series)</strong>의 형태를 가집니다.</p>
+            <p>첫 10개 항을 나열하면 다음과 같습니다:</p>
+            <p>\(a_1=\frac{1}{6}, a_2=\frac{1}{12}, a_3=\frac{1}{20}, a_4=\frac{1}{30}, a_5=\frac{1}{42}, a_6=\frac{1}{56}, a_7=\frac{1}{72}, a_8=\frac{1}{90}, a_9=\frac{1}{110}, a_{10}=\frac{1}{132}, \dots\)</p>
+            <h3>수열의 변화</h3>
+            <p>항의 값 \(a_n = \frac{1}{(n+1)(n+2)}\)은 \(n\)이 커짐에 따라 분모가 무한히 커지므로, 항의 값은 <strong>0에 가까워집니다</strong>.</p>
+            <p>수학적으로는 \(\lim_{n \to \infty} \frac{1}{(n+1)(n+2)} = 0\) 입니다.</p>
+           
+            <h3>부분합 분석 (망원급수)</h3>
+            <p>이 수열의 부분합 \(S_N = \sum_{n=1}^{N} \frac{1}{(n+1)(n+2)}\)은 다음과 같이 부분분수 분해를 통해 쉽게 계산할 수 있습니다.</p>
+            <p>먼저 일반항을 부분분수로 분해합니다:</p>
+            <p>\[ a_n = \frac{1}{(n+1)(n+2)} = \frac{1}{n+1} - \frac{1}{n+2} \]</p>
+            <p>부분합 \(S_N\)은 다음과 같이 소거됩니다:</p>
+            <p>\[ S_N = \sum_{n=1}^{N} \left( \frac{1}{n+1} - \frac{1}{n+2} \right) \]
+            \[ S_N = \left( \frac{1}{2} - \frac{1}{3} \right) + \left( \frac{1}{3} - \frac{1}{4} \right) + \dots + \left( \frac{1}{N+1} - \frac{1}{N+2} \right) \]
+            \[ S_N = \frac{1}{2} - \frac{1}{N+2} \]</p>
+            <p>부분합 \(S_N\)은 \(N\)이 커질수록 \(\frac{1}{N+2}\) 항이 0에 수렴하므로, 급수는 <strong>특정 값인 1/2에 가까워집니다</strong>.</p>
+            <p>수학적으로는 \(\lim_{N \to \infty} S_N = \lim_{N \to \infty} \left( \frac{1}{2} - \frac{1}{N+2} \right) = \frac{1}{2} - 0 = \frac{1}{2}\) 입니다.</p>
+
+            <h3>부분합의 수렴 과정</h3>
+            <p>부분합 \(S_N\)은 <strong>1/2에 아래에서부터 증가하며 수렴합니다</strong>.</p>
+            <ul>
+                <li>\(S_1 = \frac{1}{2} - \frac{1}{1+2} = \frac{1}{2} - \frac{1}{3} = \frac{1}{6} \approx 0.1667\)</li>
+                <li>\(S_2 = \frac{1}{2} - \frac{1}{2+2} = \frac{1}{2} - \frac{1}{4} = \frac{1}{4} = 0.25\)</li>
+                <li>\(S_3 = \frac{1}{2} - \frac{1}{3+2} = \frac{1}{2} - \frac{1}{5} = \frac{3}{10} = 0.3\)</li>
+                <li>\(S_4 = \frac{1}{2} - \frac{1}{4+2} = \frac{1}{2} - \frac{1}{6} = \frac{1}{3} \approx 0.3333\)</li>
+            </ul>
+
+            <h3>1항부터 10항까지 합</h3>
+            <p>\[ S_{10} = \frac{1}{2} - \frac{1}{10+2} = \frac{1}{2} - \frac{1}{12} = \frac{6}{12} - \frac{1}{12} = \frac{5}{12} \approx 0.41666... \]</p>
+            <p>이 값은 실제 <strong>수렴값인 1/2 (0.5)에 근접하고 있음을 알 수 있습니다</strong>.</p>
+        </section>
+
+        <footer class="footer">
+            © 과정형 평가 예시 - 심화 학습 자료
+        </footer>
+    </main>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body);
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('visible');
+            // Hide sidebar if user clicks on a link
+            sidebar.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (sidebar.classList.contains('visible')) {
+                        sidebar.classList.remove('visible');
+                    }
+                });
+            });
+        });
+    });
+</script>
+</body>
+</html>
