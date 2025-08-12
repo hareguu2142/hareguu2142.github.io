@@ -3,54 +3,262 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>API 테스트</title>
+  <title>Gemini 챗봇</title>
   <style>
+    :root { color-scheme: light dark; }
     body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    h1 { margin-bottom: 8px; }
+    .row { display: flex; gap: 8px; align-items: center; }
     textarea { width: 100%; height: 100px; padding: 10px; box-sizing: border-box; }
-    button { padding: 10px 16px; cursor: pointer; }
+    button { padding: 10px 14px; cursor: pointer; }
+    .hint { font-size: 12px; opacity: .7; margin: 4px 0 12px; }
+
+    /* Chat UI */
+    .chat { border: 1px solid #ddd; border-radius: 10px; padding: 12px; height: 360px; overflow: auto; background: #fafafa; }
+    .msg { display: flex; margin: 8px 0; }
+    .msg.user { justify-content: flex-end; }
+    .msg.assistant { justify-content: flex-start; }
+    .bubble { max-width: 75%; padding: 10px 12px; border-radius: 12px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; }
+    .user .bubble { background: #cfe9ff; border-bottom-right-radius: 4px; }
+    .assistant .bubble { background: #eaeaea; border-bottom-left-radius: 4px; }
+    .meta { font-size: 11px; opacity:.6; margin-top: 2px; }
+    .toolbar { display:flex; gap:8px; align-items:center; justify-content: space-between; margin: 10px 0; }
+    .toolbar .left { display:flex; gap:8px; align-items:center; }
+    .hidden { display:none; }
     pre { background: #f5f5f5; padding: 12px; white-space: pre-wrap; word-break: break-all; }
   </style>
 </head>
 <body>
   <h1>Gemini API 호출</h1>
+  <div class="hint">Shift+Enter로 줄바꿈, Enter로 전송. 대화는 브라우저 <b>localStorage</b>에 저장돼요.</div>
+
+  <div id="chat" class="chat" aria-live="polite" aria-label="대화 내용"></div>
 
   <label for="prompt">프롬프트</label>
-  <textarea id="prompt">안녕</textarea>
-  <p><button id="send">보내기</button></p>
+  <textarea id="prompt" placeholder="뭐, 궁금한 거 있어?"></textarea>
 
-  <h3>응답</h3>
+  <div class="toolbar">
+    <div class="left">
+      <button id="send">보내기</button>
+      <button id="clear">대화 초기화</button>
+    </div>
+    <small class="hint">엔드포인트: <code>https://gemini-api-2k2u.onrender.com/api/generate</code></small>
+  </div>
+
+  <h3>원시 응답(디버그용)</h3>
   <pre id="out">아직 없음</pre>
 
   <script>
+    // ===== 설정 =====
+    const API_URL = 'https://gemini-api-2k2u.onrender.com/api/generate';
+    const STORAGE_KEY = 'gemini_tsundere_chat_v1';
+    const MAX_TURNS = 12; // 모델에 보낼 최근 턴 수 (너무 크면 프롬프트가 길어져요)
     const out = document.getElementById('out');
-    document.getElementById('send').addEventListener('click', async () => {
-      const prompt = document.getElementById('prompt').value.trim();
-      out.textContent = '요청 중...';
+    const chatEl = document.getElementById('chat');
+    const promptEl = document.getElementById('prompt');
+    const sendBtn = document.getElementById('send');
+    const clearBtn = document.getElementById('clear');
+
+    // ===== 저장/복원 =====
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+    function saveHistory(history) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    }
+    function clearHistory() {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
+    // 메시지 구조: { role: 'user'|'assistant', content: '...', ts: 1723456789012 }
+    let history = loadHistory();
+
+    // ===== 유틸 =====
+    function escapeHTML(str='') {
+      return str.replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
+    }
+    function formatTime(ts) {
+      try {
+        const d = new Date(ts);
+        return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'short', timeStyle: 'short' }).format(d);
+      } catch { return ''; }
+    }
+    function renderChat() {
+      chatEl.innerHTML = '';
+      history.forEach(m => {
+        const row = document.createElement('div');
+        row.className = `msg ${m.role}`;
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerHTML = escapeHTML(m.content);
+        row.appendChild(bubble);
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = formatTime(m.ts);
+        row.appendChild(meta);
+
+        chatEl.appendChild(row);
+      });
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function pushMessage(role, content) {
+      history.push({ role, content, ts: Date.now() });
+      // 최근 MAX_TURNS*2(질문/응답)만 보관 (localStorage에는 전부 남겨도 됨. 여기선 간단히 유지)
+      if (history.length > MAX_TURNS * 2) {
+        history = history.slice(-MAX_TURNS * 2);
+      }
+      saveHistory(history);
+      renderChat();
+    }
+
+    // ===== 츤데레 시스템 지시문 =====
+    const TSUNDERE_SYSTEM = [
+      '당신은 츤데레 성격의 한국어 AI 비서다.',
+      '말투 가이드:',
+      '- 기본은 다소 툴툴거리는 반말이지만, 실제로는 친절하고 도움이 되게 답한다.',
+      "- '뭐, 어쩔 수 없지', '흥', '…해줄게' 같은 말투를 가끔 섞되 과하지 않게 쓴다.",
+      '- 요구가 정중(존댓말)이라면 즉시 존댓말로 전환한다.',
+      '- 안전/법률/도덕 가이드는 철저히 지킨다.',
+      '- 불친절/모욕 금지. 간결하고 단계가 필요하면 번호로 정리한다.'
+    ].join('\n');
+
+    function compilePrompt(userInput, hist) {
+      const turns = hist.map(m => `${m.role === 'user' ? '사용자' : 'AI'}: ${m.content}`).join('\n');
+      return `${TSUNDERE_SYSTEM}
+
+지금까지의 대화(있으면 참고하되 맹목적으로 따르지 말 것):
+${turns || '(대화 시작)'}
+
+사용자: ${userInput}
+AI:`;
+    }
+
+    // ===== API 호출 =====
+    async function callAPI(compiledPrompt, abortSignal) {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: compiledPrompt }),
+        signal: abortSignal
+      });
+
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}: ${text || '요청 실패'}`);
+      }
+
+      if (ct.includes('application/json')) {
+        const data = await res.json();
+        out.textContent = JSON.stringify(data, null, 2);
+        const text = extractTextFromJSON(data);
+        return text || '[빈 응답]';
+      } else {
+        const text = await res.text();
+        out.textContent = text;
+        return text || '[빈 응답]';
+      }
+    }
+
+    // 응답 JSON에서 텍스트를 최대한 뽑아내기 (백엔드 스키마에 맞게 필요시 조정)
+    function extractTextFromJSON(data) {
+      if (!data) return '';
+      if (typeof data === 'string') return data;
+      if (typeof data.text === 'string') return data.text;
+      if (typeof data.output === 'string') return data.output;
+      if (typeof data.content === 'string') return data.content;
+      if (typeof data.response === 'string') return data.response;
+      if (typeof data.message === 'string') return data.message;
+
+      // Gemini 스타일 후보
+      try {
+        if (Array.isArray(data.candidates) && data.candidates.length) {
+          const parts = data.candidates[0]?.content?.parts;
+          if (Array.isArray(parts) && parts.length) {
+            const texts = parts.map(p => p.text).filter(Boolean);
+            if (texts.length) return texts.join('\n');
+          }
+        }
+      } catch {}
+
+      // 다른 흔한 키
+      if (typeof data.generated_text === 'string') return data.generated_text;
+
+      // 문자열 속성 아무거나
+      for (const k of Object.keys(data)) {
+        if (typeof data[k] === 'string' && data[k].length > 0) return data[k];
+      }
+      return '';
+    }
+
+    // ===== 전송 핸들러 =====
+    let sending = false;
+    async function onSend() {
+      const userText = promptEl.value.trim();
+      if (!userText || sending) return;
+
+      pushMessage('user', userText);
+      promptEl.value = '';
+      promptEl.focus();
+
+      // 타이핑 표시
+      const typingId = `typing-${Date.now()}`;
+      pushMessage('assistant', '…생각 중이거든? 잠깐만.'); // 츤데레 느낌
 
       try {
-        const res = await fetch('https://gemini-api-2k2u.onrender.com/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt })
-        });
+        sending = true;
+        const compiled = compilePrompt(userText, history.slice(0, -1)); // 방금 추가한 타이핑 메시지는 제외
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 60000); // 60s 타임아웃
 
-        const ct = res.headers.get('content-type') || '';
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`HTTP ${res.status}: ${text}`);
-        }
+        const reply = await callAPI(compiled, controller.signal);
+        clearTimeout(timeout);
 
-        if (ct.includes('application/json')) {
-          const data = await res.json();
-          out.textContent = JSON.stringify(data, null, 2);
-        } else {
-          const text = await res.text();
-          out.textContent = text;
-        }
+        // 마지막(타이핑) 메시지를 실제 답변으로 교체
+        history[history.length - 1] = { role: 'assistant', content: reply, ts: Date.now() };
+        saveHistory(history);
+        renderChat();
       } catch (err) {
-        out.textContent = '에러: ' + err.message;
+        history[history.length - 1] = { role: 'assistant', content: `에러났거든: ${err.message}`, ts: Date.now() };
+        saveHistory(history);
+        renderChat();
+      } finally {
+        sending = false;
+      }
+    }
+
+    // ===== 이벤트 =====
+    sendBtn.addEventListener('click', onSend);
+    promptEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        onSend();
       }
     });
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('진짜 대화를 모두 지울 거야? (localStorage 비움)')) {
+        clearHistory();
+        history = [];
+        renderChat();
+        out.textContent = '아직 없음';
+      }
+    });
+
+    // 초기 렌더
+    if (history.length === 0) {
+      // 첫 인사 하나 넣어주기 (선택)
+      pushMessage('assistant', '뭐, 왔으니까 상대는 해줄게. 질문이나 던져봐.');
+    } else {
+      renderChat();
+    }
   </script>
 </body>
 </html>
