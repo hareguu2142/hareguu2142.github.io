@@ -30,14 +30,7 @@
     }
     .metric .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
     .metric .value { font: 600 22px/1.1 ui-rounded, "Noto Sans KR", system-ui, sans-serif; }
-    .hint { margin-top: 14px; font-size: 13px; color: var(--muted); }
     .small { font-size: 12px; color: var(--muted); }
-    .ex { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .chip {
-      background: #141a2a; border: 1px solid #222b45; color: #c9d2e9;
-      padding: 6px 10px; border-radius: 999px; cursor: pointer; user-select: none;
-    }
-    .chip:hover { border-color: var(--accent); color: var(--txt); }
     code { background:#141a2a; border:1px solid #222b45; padding:2px 6px; border-radius:6px; }
   </style>
 </head>
@@ -58,51 +51,35 @@
           <div class="value" id="result">0</div>
         </div>
       </div>
-
     </div>
-
   </div>
 
   <script>
     // LEN: 유니코드 코드포인트 기준 문자 수 (Google 시트의 LEN에 근사)
     function lenChars(text) {
-      // Array.from은 문자열을 유니코드 코드포인트 단위로 분해합니다.
-      return Array.from(text).length;
+      return Array.from(text).length; // 코드포인트 단위 분해 → 서로게이트 쌍 안전
     }
 
-    // LENB: "ASCII=1, 비ASCII=2" 규칙으로 계산 (한국/일본/중국 로캘의 LENB 동작을 단순화)
+    // LENB: "ASCII=1, 비ASCII=2" 규칙 (KO/JP/CN 로캘의 LENB 동작 단순화)
     function lenBytesDoubleByteRule(text) {
       let bytes = 0;
       for (const ch of text) {
         const cp = ch.codePointAt(0);
-        bytes += (cp <= 0x7F) ? 1 : 2; // ASCII 0x00~0x7F -> 1바이트, 그 외 -> 2바이트
+        bytes += (cp <= 0x7F) ? 1 : 2;
       }
       return bytes;
     }
 
+    // 나이스 바이트 수 = 2*LENB(text) - LEN(text)
     function compute() {
       const text = document.getElementById('txt').value || '';
-      const L = lenChars(text);
-      const LB = lenBytesDoubleByteRule(text);
-      const result = 2 * LB - L;
+      const L  = lenChars(text);                 // LEN
+      const LB = lenBytesDoubleByteRule(text);   // LENB (DBCS 규칙)
+      const result = 2 * LB - L;                 // =2*LENB()-LEN()
 
       document.getElementById('len').textContent = L;
-      document.getElementById('lenb').textContent = LB;
       document.getElementById('result').textContent = result;
     }
-
-    // 샘플 칩 클릭 시 예시 입력
-    document.addEventListener('click', (e) => {
-      const chip = e.target.closest('.chip');
-      if (!chip) return;
-      const sample = chip.getAttribute('data-sample') || '';
-      const ta = document.getElementById('txt');
-      ta.value = sample;
-      compute();
-      ta.focus();
-      // 커서를 끝으로
-      ta.selectionStart = ta.selectionEnd = ta.value.length;
-    });
 
     // 입력 이벤트에 반응
     document.getElementById('txt').addEventListener('input', compute);
