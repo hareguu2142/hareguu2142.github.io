@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Monte Carlo로 원주율(π) 추정하기 · 단일 파일</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #11162a;
+      --panel-2: #0e1430;
+      --text: #e8ecff;
+      --muted: #a4b0d0;
+      --accent: #6ea8ff;
+      --ok: #10b981;
+      --warn: #ef4444;
+      --shadow: rgba(0,0,0,0.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; padding: 24px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, #1a2347 0%, var(--bg) 55%);
+      color: var(--text);
+    }
+    h1 { margin: 0 0 16px; font-weight: 800; letter-spacing: 0.2px; }
+    .app { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 360px; gap: 18px; align-items: start; }
+    @media (max-width: 1000px) { .app { grid-template-columns: 1fr; } }
+
+    .card { background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%); border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 8px 30px var(--shadow); border-radius: 16px; }
+    .pad { padding: 16px; }
+
+    /* Canvas area */
+    .stage { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+    .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+    .toolbar { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 12px; }
+    .toolbar button { 
+      padding: 10px 12px; border: 1px solid rgba(255,255,255,0.12); background: #0f1632; color: var(--text); border-radius: 12px;
+      font-weight: 700; cursor: pointer; transition: transform .04s ease, background .2s ease; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    }
+    .toolbar button:hover { background: #111b3e; }
+    .toolbar button:active { transform: translateY(1px); }
+
+    .stats { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .stat { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px; }
+    .stat .k { font-size: 12px; color: var(--muted); }
+    .stat .v { font-size: 20px; font-weight: 800; margin-top: 4px; }
+
+    .controls { display: grid; gap: 14px; }
+    .group { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 14px; }
+    .group h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted); font-weight: 700; letter-spacing: .2px; }
+
+    .row { display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: center; margin: 10px 0; }
+    .row .val { text-align: right; color: var(--muted); font-size: 12px; }
+
+    input[type="range"] { width: 100%; }
+    .inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .inline label { font-size: 13px; color: var(--muted); }
+    .color-pickers { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+    .color { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); padding: 10px; border-radius: 10px; }
+    .color code { font-size: 12px; color: var(--muted); }
+
+    .note { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    a.link { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section>
+      <h1>Monte Carlo로 원주율(π) 추정</h1>
+      <div class="card pad">
+        <div class="toolbar">
+          <button id="toggleRun">▶️ 시작</button>
+          <button id="step1000">➕ 1,000개 추가</button>
+          <button id="reset">♻️ 초기화</button>
+        </div>
+        <div class="stage" id="stage">
+          <!-- 배경(정사각형, 원) 캔버스 -->
+          <canvas id="bg"></canvas>
+          <!-- 점(시행) 캔버스 -->
+          <canvas id="dots"></canvas>
+        </div>
+        <div class="pad" style="padding: 12px 0 0;">
+          <div class="stats">
+            <div class="stat">
+              <div class="k">전체 점 (N)</div>
+              <div class="v" id="totalOut">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">원의 안 (K)</div>
+              <div class="v" id="insideOut">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">K / N</div>
+              <div class="v" id="ratioOut">—</div>
+            </div>
+            <div class="stat">
+              <div class="k">π 추정치 (4·K/N)</div>
+              <div class="v" id="piOut">—</div>
+            </div>
+            <div class="stat" style="grid-column: span 2;">
+              <div class="k">95% 신뢰구간 (정규 근사)</div>
+              <div class="v" id="ciOut">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card pad">
+      <div class="controls">
+        <div class="group">
+          <h3>실험 설정</h3>
+          <div class="row">
+            <label for="speed">속도 (프레임당 점 수)</label>
+            <div class="inline"><input id="speed" type="range" min="1" max="2000" value="200" /><span class="val"><span id="speedVal">200</span> /frame ≈ <span id="ppsVal">12,000</span> /s</span></div>
+          </div>
+          <div class="row">
+            <label for="size">점 크기</label>
+            <div class="inline"><input id="size" type="range" min="1" max="5" value="2" /><span class="val"><span id="sizeVal">2</span> px</span></div>
+          </div>
+          <div class="inline">
+            <input id="showDots" type="checkbox" checked />
+            <label for="showDots">점 표시 (끄면 더 빠름)</label>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>색상</h3>
+          <div class="color-pickers">
+            <div class="color">
+              <label style="width: 88px;">정사각형</label>
+              <input id="squareColor" type="color" value="#3b82f6" /> <code id="squareCode">#3b82f6</code>
+            </div>
+            <div class="color">
+              <label style="width: 88px;">원</label>
+              <input id="circleColor" type="color" value="#10b981" /> <code id="circleCode">#10b981</code>
+            </div>
+            <div class="color">
+              <label style="width: 88px;">점(원 안)</label>
+              <input id="insideColor" type="color" value="#60a5fa" /> <code id="insideCode">#60a5fa</code>
+            </div>
+            <div class="color">
+              <label style="width: 88px;">점(원 밖)</label>
+              <input id="outsideColor" type="color" value="#ef4444" /> <code id="outsideCode">#ef4444</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>원리</h3>
+          <p class="note">
+            한 변이 2인 정사각형(넓이 4)에 반지름 1의 원을 내접시킵니다. 임의의 점을 정사각형에 균일하게 찍을 때,<br/>
+            <strong>원 안의 비율</strong> \(K/N\)은 <strong>넓이의 비율</strong> \(\frac{\text{원}}{\text{정사각형}} = \frac{\pi}{4}\)에 수렴합니다. 따라서
+            \(\;\hat{\pi} = 4\cdot (K/N)\;\).
+          </p>
+          <p class="note">※ 신뢰구간은 \(p=K/N\)에 대한 정규 근사 \(p \pm 1.96\sqrt{p(1-p)/N}\)를 이용해 \(\pi\)로 선형 변환했습니다.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // ===== 유틸 =====
+    const fmtInt = (n) => n.toLocaleString('ko-KR');
+    const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+    // ===== DOM =====
+    const bg = document.getElementById('bg');
+    const dots = document.getElementById('dots');
+    const stage = document.getElementById('stage');
+
+    const toggleRunBtn = document.getElementById('toggleRun');
+    const step1000Btn = document.getElementById('step1000');
+    const resetBtn = document.getElementById('reset');
+
+    const speed = document.getElementById('speed');
+    const size = document.getElementById('size');
+    const showDots = document.getElementById('showDots');
+
+    const squareColor = document.getElementById('squareColor');
+    const circleColor  = document.getElementById('circleColor');
+    const insideColor  = document.getElementById('insideColor');
+    const outsideColor = document.getElementById('outsideColor');
+
+    const squareCode = document.getElementById('squareCode');
+    const circleCode = document.getElementById('circleCode');
+    const insideCode = document.getElementById('insideCode');
+    const outsideCode= document.getElementById('outsideCode');
+
+    const totalOut  = document.getElementById('totalOut');
+    const insideOut = document.getElementById('insideOut');
+    const ratioOut  = document.getElementById('ratioOut');
+    const piOut     = document.getElementById('piOut');
+    const ciOut     = document.getElementById('ciOut');
+
+    const speedVal = document.getElementById('speedVal');
+    const ppsVal   = document.getElementById('ppsVal');
+    const sizeVal  = document.getElementById('sizeVal');
+
+    // ===== 상태 =====
+    let running = false;
+    let total = 0, inside = 0;
+    let dpr = window.devicePixelRatio || 1;
+
+    const bgCtx = bg.getContext('2d');
+    const dotCtx = dots.getContext('2d');
+
+    function resize() {
+      const rect = stage.getBoundingClientRect();
+      const w = Math.floor(rect.width);
+      const h = Math.floor(rect.height);
+      [bg, dots].forEach(c => { c.style.width = w+'px'; c.style.height = h+'px'; c.width = Math.floor(w * dpr); c.height = Math.floor(h * dpr); });
+      drawBackground();
+    }
+
+    window.addEventListener('resize', resize);
+
+    // 배경 그리기 (정사각형 테두리 + 내접원)
+    function drawBackground() {
+      const w = bg.width, h = bg.height; // device pixels
+      bgCtx.clearRect(0,0,w,h);
+
+      // 배경 채우기 (부드러운 그라데이션)
+      const grad = bgCtx.createLinearGradient(0,0,0,h);
+      grad.addColorStop(0, 'rgba(255,255,255,0.02)');
+      grad.addColorStop(1, 'rgba(255,255,255,0.00)');
+      bgCtx.fillStyle = grad; bgCtx.fillRect(0,0,w,h);
+
+      // 정사각형 테두리
+      bgCtx.save();
+      bgCtx.lineWidth = 2 * dpr;
+      bgCtx.strokeStyle = squareColor.value;
+      bgCtx.strokeRect(1 * dpr, 1 * dpr, w - 2 * dpr, h - 2 * dpr);
+
+      // 내접원
+      bgCtx.strokeStyle = circleColor.value;
+      const r = Math.min(w,h) / 2 - 2*dpr; // 테두리 안쪽으로 살짝
+      bgCtx.beginPath();
+      bgCtx.arc(w/2, h/2, r, 0, Math.PI*2);
+      bgCtx.stroke();
+      bgCtx.restore();
+    }
+
+    function clearDots() {
+      dotCtx.clearRect(0,0,dots.width,dots.height);
+    }
+
+    // 좌표계: 수학적 좌표 x,y ∈ [-1,1]를 캔버스 픽셀로
+    function toPixel(x, y) {
+      const w = dots.width, h = dots.height;
+      const px = (x + 1) * 0.5 * w;
+      const py = (1 - (y + 1) * 0.5) * h; // y축 반전
+      return [px, py];
+    }
+
+    function dropPoint(draw = true) {
+      // 무작위 점 생성
+      const x = Math.random()*2 - 1; // [-1,1]
+      const y = Math.random()*2 - 1; // [-1,1]
+      const isInside = (x*x + y*y) <= 1;
+
+      total++;
+      if (isInside) inside++;
+
+      if (draw && showDots.checked) {
+        const [px, py] = toPixel(x, y);
+        dotCtx.save();
+        dotCtx.fillStyle = isInside ? insideColor.value : outsideColor.value;
+        const s = parseInt(size.value, 10) * dpr;
+        // 빠른 렌더를 위해 작은 사각형 픽셀로 표현
+        dotCtx.fillRect(px - s/2, py - s/2, s, s);
+        dotCtx.restore();
+      }
+    }
+
+    function updateStats() {
+      totalOut.textContent = fmtInt(total);
+      insideOut.textContent = fmtInt(inside);
+      if (total === 0) {
+        ratioOut.textContent = '—';
+        piOut.textContent = '—';
+        ciOut.textContent = '—';
+        return;
+      }
+      const p = inside / total;
+      const piHat = 4 * p;
+      ratioOut.textContent = p.toFixed(6);
+      piOut.textContent = piHat.toFixed(6);
+
+      // 95% CI (정규 근사)
+      const se = Math.sqrt(p*(1-p)/total);
+      let lo = 4*(p - 1.96*se);
+      let hi = 4*(p + 1.96*se);
+      lo = clamp(lo, 0, 4);
+      hi = clamp(hi, 0, 4);
+      ciOut.textContent = `[${lo.toFixed(6)}, ${hi.toFixed(6)}]`;
+    }
+
+    // 애니메이션 루프
+    function loop() {
+      if (!running) return;
+      const perFrame = parseInt(speed.value, 10);
+      // 점 표시를 끄면 배치 업데이트만 수행
+      for (let i = 0; i < perFrame; i++) dropPoint(true);
+      updateStats();
+      requestAnimationFrame(loop);
+    }
+
+    function setRunning(v) {
+      running = v;
+      toggleRunBtn.textContent = running ? '⏸ 일시정지' : '▶️ 시작';
+      if (running) requestAnimationFrame(loop);
+    }
+
+    // 이벤트 바인딩
+    toggleRunBtn.addEventListener('click', () => setRunning(!running));
+    step1000Btn.addEventListener('click', () => {
+      // 표시가 꺼져 있어도 통계는 동일하게 누적
+      const wasRunning = running; setRunning(false);
+      const BATCH = 1000;
+      const drawNow = showDots.checked;
+      // 그리기 최적화: 경로 없이 사각형 픽셀
+      dotCtx.save();
+      dotCtx.fillStyle = insideColor.value; // placeholder; 실제는 각 점에서 바꿈
+      for (let i = 0; i < BATCH; i++) dropPoint(true);
+      dotCtx.restore();
+      updateStats();
+      if (wasRunning) setRunning(true);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      setRunning(false);
+      total = 0; inside = 0;
+      clearDots();
+      updateStats();
+      drawBackground();
+    });
+
+    speed.addEventListener('input', () => {
+      const v = parseInt(speed.value, 10);
+      speedVal.textContent = v.toString();
+      ppsVal.textContent = fmtInt(v * 60);
+    });
+
+    size.addEventListener('input', () => { sizeVal.textContent = size.value; });
+
+    ;[squareColor, circleColor, insideColor, outsideColor].forEach((el, idx) => {
+      const codeEls = [squareCode, circleCode, insideCode, outsideCode];
+      el.addEventListener('input', () => {
+        codeEls[idx].textContent = el.value.toLowerCase();
+        if (el === squareColor || el === circleColor) drawBackground();
+      });
+    });
+
+    showDots.addEventListener('change', () => {
+      // 점 표시를 끄면 새로 찍히는 점만 숨김. 이미 그려진 점은 유지.
+    });
+
+    // 초기화
+    resize();
+    updateStats();
+    speed.dispatchEvent(new Event('input'));
+    size.dispatchEvent(new Event('input'));
+  </script>
+</body>
+</html>
