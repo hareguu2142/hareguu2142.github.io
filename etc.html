@@ -1,7 +1,9 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>개인 창고</title>
 <style>
     body {
@@ -26,25 +28,30 @@
         color: #007bff;
         margin-bottom: 10px;
     }
+
+    /* 각 항목 간 간격만 담당 */
     .text-item {
         margin-bottom: 15px;
+    }
+
+    /* a가 버튼 전체를 차지하도록 변경 */
+    .text-item a {
+        display: block;               /* 링크가 블록 전체를 차지 */
         padding: 10px 20px;
         background-color: #007bff;
         border-radius: 5px;
         transition: background-color 0.3s, transform 0.3s;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .text-item a {
         color: white;
         text-decoration: none;
         font-size: 18px;
         font-weight: bold;
     }
-    .text-item:hover {
+    .text-item a:hover {
         background-color: #0056b3;
         transform: translateY(-2px);
     }
-    .text-item:active {
+    .text-item a:active {
         transform: translateY(0);
     }
 </style>
@@ -53,6 +60,7 @@
     <div class="container">
         <div class="column">
             <h2>링크 모음</h2>
+
             <div class="text-item"><a href="etc/2025 Semester 1 Math Project.html" target="_blank">2025 Semester 1 Math Project</a></div>
             <div class="text-item"><a href="etc/array_sequence.html" target="_blank">array_sequence</a></div>
             <div class="text-item"><a href="etc/Bank Balance Exponential Function Graph.html" target="_blank">Bank Balance Exponential Function Graph</a></div>
@@ -63,7 +71,9 @@
             <div class="text-item"><a href="etc/Sequence Inductive Patterns - Homework Example 3.html" target="_blank">Sequence Inductive Patterns - Homework Example 3</a></div>
             <div class="text-item"><a href="etc/wisdom_of_life.html" target="_blank">부처님의 말씀</a></div>
             <div class="text-item"><a href="etc/몬테카를로.html" target="_blank">몬테카를로</a></div>
+
         </div>
     </div>
 </body>
 </html>
+
