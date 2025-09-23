@@ -46,10 +46,8 @@
   .table-scroll{max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:12px}
   .small{font-size:12px}
   .sticky-head thead th{position:sticky;top:0;z-index:1}
-  
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
 </head>
 <body>
 <header>
@@ -84,7 +82,7 @@
       <button class="btn ghost" id="addSubject">+ 과목 행 추가</button>
       <button class="btn danger" id="clearSubjects">과목 모두 삭제</button>
       <button class="btn ghost" id="resetAll">저장데이터 초기화</button>
-      <div class="muted">각 과목은 <b>총 수업시간</b>과 (선택) <b>한 반당 수업시간</b>, (선택) <b>개별 시간당 수업료</b>를 입력할 수 있습니다. 비워두면 기본 수업료가 적용됩니다.</div>
+      <div class="muted">각 과목은 <b>총 수업시간</b>과 (선택) <b>개별 시간당 수업료</b>만 입력하면 됩니다.</div>
     </div>
 
     <div class="table-scroll sticky-head">
@@ -93,7 +91,6 @@
           <tr>
             <th style="min-width:160px">과목명</th>
             <th>총 수업시간(시간)</th>
-            <th>한 반당 수업시간(시간)</th>
             <th>시간당 수업료(원, 선택)</th>
             <th>삭제</th>
           </tr>
@@ -105,7 +102,7 @@
     <div class="right">
       <button class="btn" id="tab1Next">확인 및 다음 ▶</button>
     </div>
-    <div class="note small">※ ‘한 반당 수업시간’은 회차 수 산정 등 참고용 입력입니다. 실제 배분은 <b>과목별 총 수업시간</b> 기준으로 계산됩니다.</div>
+    <div class="note small">※ 수업료 배분은 <b>과목별 총 수업시간</b> 기준으로 계산됩니다.</div>
   </section>
 
   <!-- TAB 2 -->
@@ -113,8 +110,7 @@
     <div class="grid">
       <div>
         <label>학생 CSV 업로드</label>
-          <!-- 파일 입력 accept 수정 -->
-          <input type="file" id="csvFile" accept=".csv,.xls,.xlsx">
+        <input type="file" id="csvFile" accept=".csv,.xls,.xlsx">
         <div class="muted small">헤더 예시: <code>학번,이름,국어,수학,영어,...</code> / 값: <code>o</code> 또는 비공백 = 수강</div>
       </div>
       <div>
@@ -256,20 +252,19 @@
       <button class="btn" onclick="window.print()">인쇄</button>
     </div>
     <div class="note small">
-      ※ 수강료/수용비는 100원 단위 반올림 및 총액 보정(라지스트 리마인더 방식)으로 분배됩니다. 학생별 과목 교차 셀은 학생의 전체 수강료를 <b>해당 학생이 수강한 과목의 총시간 비율</b>로 분해한 표시이며, 과목별 열 합계가 과목 총비용과 일치하지 않을 수 있습니다.
+      ※ 수강료/수용비는 100원 단위 반올림 및 총액 보정(라지스트 리마인더 방식)으로 분배됩니다. 학생별 과목 교차 셀은 학생의 전체 수강료를 <b>해당 학생이 수강한 과목의 총시간 비율</b>로 분해한 표기이며, 과목별 열 합계가 과목 총비용과 일치하지 않을 수 있습니다.
     </div>
   </section>
 </div>
 
 <script>
-  
 // =====================
 // 상태 & 포맷터
 // =====================
 const state = {
   memo: "",
   defaultRate: 35000,
-  subjects: [], // {name, totalHours, perClassHours, hourlyRate?}
+  subjects: [], // {name, totalHours, hourlyRate?}
   students: [], // {id, name, takes: { [subjectName]: true/false }, uid}
   // computed:
   totalTuition: 0,              // 원금(반올림 전)
@@ -307,15 +302,13 @@ function switchTab(n){
   saveProgress();
 }
 
-// [추가] 탭 버튼 클릭 시 탭 이동 (disabled면 무시)
+// 탭 버튼 클릭
 document.querySelectorAll('.tab-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     if (btn.disabled) return;
     switchTab(+btn.dataset.tab);
   });
 });
-
-
 
 function enableTab(n, enabled=true){
   const btn = document.querySelector(`.tab-btn[data-tab="${n}"]`);
@@ -332,7 +325,7 @@ function showSavedBadge(){
 function saveProgress(){
   try{
     const snapshot = {
-      version: 1,
+      version: 2,
       currentTab,
       memo: state.memo,
       defaultRate: state.defaultRate,
@@ -363,8 +356,8 @@ function restoreProgress(){
     // 과목 테이블 복원
     if(Array.isArray(snap.subjects)){
       document.querySelector('#subjectsTable tbody').innerHTML = '';
-      snap.subjects.forEach(s=> addSubjectRow(s));
-      state.subjects = snap.subjects;
+      snap.subjects.forEach(s=> addSubjectRow(s)); // perClassHours가 있어도 무시
+      state.subjects = snap.subjects.map(({name,totalHours,hourlyRate})=>({name,totalHours,hourlyRate}));
     }
 
     // 학생/CSV 복원
@@ -430,7 +423,6 @@ document.querySelector('#tab1Next').addEventListener('click', ()=>{
     alert("과목을 1개 이상 입력하세요.");
     return;
   }
-  // Validate hours
   for(const s of state.subjects){
     if(!s.name){ alert("과목명은 비워둘 수 없습니다."); return; }
     if(!(s.totalHours>0)){ alert(`과목 '${s.name}'의 총 수업시간을 올바르게 입력하세요.`); return; }
@@ -440,17 +432,15 @@ document.querySelector('#tab1Next').addEventListener('click', ()=>{
   switchTab(2);
 });
 
-function addSubjectRow(s={name:"", totalHours:"", perClassHours:"", hourlyRate:""}){
+function addSubjectRow(s={name:"", totalHours:"", hourlyRate:""}){
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><input type="text" placeholder="과목명" value="${s.name??""}"></td>
     <td><input type="number" min="0" step="0.5" placeholder="예: 10" value="${s.totalHours??""}"></td>
-    <td><input type="number" min="0" step="0.5" placeholder="예: 2 (선택)" value="${s.perClassHours??""}"></td>
     <td><input type="number" min="0" step="100" placeholder="기본 사용" value="${s.hourlyRate??""}"></td>
     <td><button class="btn danger small-btn">삭제</button></td>
   `;
   tr.querySelector('.danger').addEventListener('click', ()=>{ tr.remove(); readSubjectsFromTable(); saveProgress(); });
-  // 입력 변경 시 자동 저장
   tr.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('change', ()=>{ readSubjectsFromTable(); saveProgress(); });
   });
@@ -461,17 +451,16 @@ function readSubjectsFromTable(){
   const rows = subjectsTbody.querySelectorAll('tr');
   const list = [];
   rows.forEach(r=>{
-    const [nameEl, totEl, perEl, rateEl] = r.querySelectorAll('input');
+    const [nameEl, totEl, rateEl] = r.querySelectorAll('input');
     const name = nameEl.value.trim();
     const totalHours = +totEl.value || 0;
-    const perClassHours = +perEl.value || 0;
-    const hourlyRate = rateEl.value==="" ? null : (+rateEl.value || null); // null means use default
-    if(name) list.push({name, totalHours, perClassHours, hourlyRate});
+    const hourlyRate = rateEl.value==="" ? null : (+rateEl.value || null); // null = use default
+    if(name) list.push({name, totalHours, hourlyRate});
   });
   state.subjects = list;
 }
 
-/* Prefill a couple rows to guide (초기 복원 없을 때만) */
+/* Prefill (초기 복원 없을 때만) */
 (function prefill(){
   const hasSaved = !!localStorage.getItem(STORAGE_KEY);
   if(!hasSaved){
@@ -492,7 +481,6 @@ document.querySelector('#tab2Next').addEventListener('click', ()=>{
   switchTab(3);
 });
 
-// handleCSV 교체 + 공통 처리 함수 추가
 function handleCSV(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -571,12 +559,9 @@ function processParsed(headers, rows){
   saveProgress();
 }
 
-
 function parseCSV(text){
-  // simple CSV parser with quotes support
   const lines = text.replace(/\r\n?/g,"\n").split("\n");
-  const rows=[];
-  let headers=[];
+  const rows=[]; let headers=[];
   for(let li=0; li<lines.length; li++){
     const line = lines[li];
     if(li===0){ headers = splitCSVLine(line); continue; }
@@ -626,31 +611,32 @@ document.querySelector('#tab3Next').addEventListener('click', ()=>{
 });
 
 function computeAllocations(){
-  // total tuition = sum(subject.totalHours * rate)  (총액 계산은 기존과 동일)
+  // 총 수업료 = Σ(과목 총시간 * (개별 또는 기본)시급)
   const rateOf = s => (s.hourlyRate ?? state.defaultRate);
   const total = state.subjects.reduce((acc,s)=>acc + (s.totalHours||0) * rateOf(s), 0);
   state.totalTuition = total;
   state.totalTuitionRounded = r100(total);
 
-  // ⬇️ 학생 가중치: '총 수업시간' 대신 '한 반당 수업시간(perClassHours)' 합계로 계산
+  // 학생 가중치: '수강한 과목의 총 수업시간' 합
   const subjIndex = new Map(state.subjects.map(s=>[s.name, s]));
   const H = state.students.map(st=>{
     let h=0;
     for(const [sn,t] of Object.entries(st.takes)){
       if(!t) continue;
-      if(!subjIndex.has(sn)) continue;
-      h += (subjIndex.get(sn).perClassHours || 0); // CHANGED
+      const subj = subjIndex.get(sn);
+      if(!subj) continue;
+      h += (subj.totalHours || 0);
     }
     return h;
   });
   state.hoursByStudent = H;
   const Htot = H.reduce((a,b)=>a+b,0);
 
-  // base fee raw by perClassHours share
+  // 학생별 기본 수강료(원금) 배분
   const baseRaw = H.map(h=> Htot>0 ? total * (h/Htot) : 0);
   state.baseFeeRaw = baseRaw;
 
-  // per-cell allocation: 학생의 perClassHours 비율로 과목별 분해
+  // 학생×과목 표시용 분해: 해당 학생이 수강한 과목들의 '총 수업시간' 비율로 분해
   const perCell = state.students.map((st,idx)=>{
     const rowAlloc={};
     const studentHours = H[idx];
@@ -661,7 +647,7 @@ function computeAllocations(){
     }
     for(const s of state.subjects){
       if(st.takes[s.name]){
-        const part = base * ((s.perClassHours || 0) / studentHours); // CHANGED
+        const part = base * ((s.totalHours || 0) / studentHours);
         rowAlloc[s.name] = part;
       }else{
         rowAlloc[s.name] = 0;
@@ -678,7 +664,6 @@ function computeAllocations(){
   state.baseFeeRounded = lrm;
 }
 
-
 function largestRemainderHundreds(rawVals, roundedVals, targetSum){
   const out = roundedVals.slice();
   let diff = targetSum - out.reduce((a,b)=>a+b,0);
@@ -689,14 +674,14 @@ function largestRemainderHundreds(rawVals, roundedVals, targetSum){
     positive: v>0
   }));
   if(diff>0){
-    // 가장 큰 소수부부터 +100 부여 (수강시간>0인 학생만)
+    // 가장 큰 소수부부터 +100
     infos.sort((a,b)=> b.frac - a.frac);
     for(let k=0; k<infos.length && diff>0; k++){
       const {i, positive} = infos[k];
       if(!positive) continue;
       out[i]+=100; diff-=100;
     }
-    // 남으면 다시 순환 분배
+    // 남으면 순환
     let idx=0;
     while(diff>0 && infos.length){
       const {i, positive} = infos[idx % infos.length];
@@ -704,13 +689,12 @@ function largestRemainderHundreds(rawVals, roundedVals, targetSum){
       idx++;
     }
   }else{
-    // 가장 작은 소수부부터 -100 차감 (0 미만은 불가)
+    // 가장 작은 소수부부터 -100 (0 미만 금지)
     infos.sort((a,b)=> a.frac - b.frac);
     for(let k=0; k<infos.length && diff<0; k++){
       const {i} = infos[k];
       if(out[i]>=100){ out[i]-=100; diff+=100; }
     }
-    // 남으면 다시 순환 차감
     let idx=0;
     while(diff<0 && infos.length){
       const {i} = infos[idx % infos.length];
@@ -737,21 +721,17 @@ function renderAllocTable(){
     </tr>
   `;
   tbody.innerHTML = state.students.map((st,i)=>{
-    // 과목별 값들을 반드시 <td>로 감싸서 열이 맞도록 출력
-    const cells = subj
-      .map(s => `<td>${fmt(state.perCellAlloc[i][s] || 0)}</td>`)
-      .join("");
-     return `
-       <tr>
-         <td>${st.id||""}</td>
-         <td>${st.name||""}</td>
-         ${cells}
-         <td><b>${fmt(state.baseFeeRounded[i])}</b></td>
-       </tr>
-     `;
+    const cells = subj.map(s => `<td>${fmt(state.perCellAlloc[i][s] || 0)}</td>`).join("");
+    return `
+      <tr>
+        <td>${st.id||""}</td>
+        <td>${st.name||""}</td>
+        ${cells}
+        <td><b>${fmt(state.baseFeeRounded[i])}</b></td>
+      </tr>
+    `;
   }).join("");
-  // footer: 참고 합계
-  const colSums = subj.map((s,si)=> state.students.reduce((acc,_,ri)=> acc + (state.perCellAlloc[ri][s]||0), 0) );
+  const colSums = subj.map((s)=> state.students.reduce((acc,_,ri)=> acc + (state.perCellAlloc[ri][s]||0), 0) );
   const grand = state.baseFeeRounded.reduce((a,b)=>a+b,0);
   tfoot.innerHTML = `
     <tr>
@@ -769,7 +749,7 @@ document.querySelector('#applyBulk').addEventListener('click', ()=>{
   const v = +document.querySelector('#bulkDiscount').value;
   if(!(v>=0 && v<=1)){ alert("할인율은 0~1 사이로 입력하세요."); return; }
   state.discounts = state.discounts.map(()=>v);
-  renderDiscountTable(); // will also recompute facility
+  renderDiscountTable();
   saveProgress();
 });
 document.querySelector('#facilityPct').addEventListener('input', ()=>{
@@ -803,22 +783,18 @@ function updateFacilityWidgets(){
 }
 
 function renderDiscountTable(){
-  // compute discounted fees from baseFeeRounded
   state.discountedFee = state.baseFeeRounded.map((base,i)=> r100(base * (1 - (state.discounts[i]||0))) );
-  recomputeFacility(); // also renders table body
+  recomputeFacility();
 }
 
 function recomputeFacility(){
-  // Facility pool rounded to 100
   const pool = r100(state.totalTuition * state.facilityPct/100);
   state.facilityPool = pool;
 
-  // weights: discounted fee; exclude discount==1
   const weights = state.discountedFee.map((df,i)=> (state.discounts[i]===1 ? 0 : df));
   const W = weights.reduce((a,b)=>a+b,0);
   const rawShares = weights.map(w=> W>0 ? (pool * (w/W)) : 0);
 
-  // round to 100 & largest remainder fix to match pool exactly
   const rounded = rawShares.map(r100);
   let diff = pool - rounded.reduce((a,b)=>a+b,0);
 
@@ -828,7 +804,7 @@ function recomputeFacility(){
       rema.sort((a,b)=> b.frac - a.frac);
       for(let k=0; k<rema.length && diff>0; k++){
         const i = rema[k].i;
-        if(weights[i]===0) continue; // skip excluded
+        if(weights[i]===0) continue;
         rounded[i]+=100; diff-=100;
       }
     }else if(diff<0){
@@ -842,7 +818,6 @@ function recomputeFacility(){
   }
   state.facilityAlloc = rounded;
 
-  // render table
   const tbody = document.querySelector('#discountTable tbody');
   tbody.innerHTML = state.students.map((st,i)=>`
     <tr>
@@ -909,7 +884,6 @@ function renderFinalTable(){
 
 /* ---------- Export CSV ---------- */
 document.querySelector('#exportCSV').addEventListener('click', ()=>{
-  // Final per-student CSV
   const header = ["학번","이름","수강료(100원)","할인율","할인 후 수강료(100원)","수용비(100원)","최종 납부액"];
   const rows = state.students.map((st,i)=>[
     st.id, st.name,
@@ -922,7 +896,6 @@ document.querySelector('#exportCSV').addEventListener('click', ()=>{
   const csv = [header, ...rows].map(r=>r.map(escapeCSV).join(",")).join("\r\n");
   download("결산_최종.csv", "\ufeff"+csv);
 
-  // Optional: per-student per-subject breakdown
   const subj = state.subjects.map(s=>s.name);
   const header2 = ["학번","이름",...subj,"수강료(100원)"];
   const rows2 = state.students.map((st,i)=>[
@@ -945,17 +918,14 @@ function download(filename, content){
 
 /* ---------- INIT ---------- */
 function bootstrap(){
-  // If user edits defaultRate later, it applies from next computation step
   document.querySelector('#defaultRate').addEventListener('change', e=>{
     const v = +e.target.value; if(!(v>=0)){ e.target.value = state.defaultRate; return; }
     state.defaultRate = v; saveProgress();
   });
   document.querySelector('#memo').addEventListener('change', e=>{ state.memo = e.target.value.trim(); saveProgress(); });
 
-  // 복원 시도
   const restored = restoreProgress();
   if(!restored){
-    // 초기 저장 상태 기록
     saveProgress();
   }
 }
