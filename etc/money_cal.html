@@ -46,7 +46,10 @@
   .table-scroll{max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:12px}
   .small{font-size:12px}
   .sticky-head thead th{position:sticky;top:0;z-index:1}
+  
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 </head>
 <body>
 <header>
@@ -110,7 +113,8 @@
     <div class="grid">
       <div>
         <label>학생 CSV 업로드</label>
-        <input type="file" id="csvFile" accept=".csv">
+          <!-- 파일 입력 accept 수정 -->
+          <input type="file" id="csvFile" accept=".csv,.xls,.xlsx">
         <div class="muted small">헤더 예시: <code>학번,이름,국어,수학,영어,...</code> / 값: <code>o</code> 또는 비공백 = 수강</div>
       </div>
       <div>
@@ -258,6 +262,7 @@
 </div>
 
 <script>
+  
 // =====================
 // 상태 & 포맷터
 // =====================
@@ -487,58 +492,85 @@ document.querySelector('#tab2Next').addEventListener('click', ()=>{
   switchTab(3);
 });
 
+// handleCSV 교체 + 공통 처리 함수 추가
 function handleCSV(e){
   const file = e.target.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const text = reader.result;
-    const {headers, rows} = parseCSV(text);
-    csvHeaders = headers;
-    window.__csvCache = {headers, rows};
-    const subjSet = new Set(state.subjects.map(s=>s.name));
-    // columns: must include '학번','이름'
-    const idIdx = headers.findIndex(h=>h.trim()==="학번");
-    const nameIdx = headers.findIndex(h=>h.trim()==="이름");
-    if(idIdx<0 || nameIdx<0){
-      alert("CSV 첫 행에 '학번'과 '이름' 열이 있어야 합니다.");
-      return;
-    }
-    const subjectCols = headers
-      .map((h,i)=>({h:h.trim(),i}))
-      .filter(o=>o.i!==idIdx && o.i!==nameIdx);
-    const students=[];
-    rows.forEach((cells,rowIdx)=>{
-      const id = (cells[idIdx]??"").trim();
-      const name = (cells[nameIdx]??"").trim();
-      if(!id && !name) return; // skip empty line
-      const takes={};
-      subjectCols.forEach(sc=>{
-        const val = (cells[sc.i]??"").trim();
-        takes[sc.h] = isEnrolled(val);
-      });
-      students.push({id, name, takes, uid:`${id}__${name}__${rowIdx}`});
-    });
-    state.students = students;
+  const name = (file.name || "").toLowerCase();
 
-    // Preview
-    renderStudentsPreview(headers, rows);
-
-    // Summary + subject matching warning
-    const csvOnly = subjectCols.map(c=>c.h).filter(h=>!subjSet.has(h));
-    const definedOnly = [...subjSet].filter(h=>!subjectCols.map(c=>c.h).includes(h));
-    const summaryEl = document.querySelector('#csvSummary');
-    summaryEl.innerHTML = `
-      학생 ${students.length}명 로드됨.<br>
-      CSV 과목 중 미정의 과목: ${csvOnly.length? `<span class="danger-text">${csvOnly.join(", ")}</span>`:"없음"}<br>
-      정의했으나 CSV에 없는 과목: ${definedOnly.length? `<span class="warn-text">${definedOnly.join(", ")}</span>`:"없음"}
-    `;
-    document.querySelector('#studentsPreviewWrap').style.display="";
-    document.querySelector('#tab2Next').disabled = students.length===0;
-    saveProgress();
-  };
-  reader.readAsText(file, {type: "text/csv; charset=utf-8"});
+  if(name.endsWith(".csv")){
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result;
+      const {headers, rows} = parseCSV(text);
+      processParsed(headers, rows);
+    };
+    reader.readAsText(file, "utf-8");
+  } else if(name.endsWith(".xlsx") || name.endsWith(".xls")){
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const wb = XLSX.read(reader.result, {type:"array"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:""});
+        if(!aoa || !aoa.length){ alert("엑셀 시트에 데이터가 없습니다."); return; }
+        const headers = aoa[0].map(v => String(v).trim());
+        const rows = aoa.slice(1).map(r => r.map(v => v==null ? "" : String(v)));
+        processParsed(headers, rows);
+      }catch(err){
+        console.error(err);
+        alert("엑셀 파일을 읽는 중 오류가 발생했습니다.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    alert("CSV, XLS, XLSX 파일만 업로드할 수 있습니다.");
+  }
 }
+
+function processParsed(headers, rows){
+  csvHeaders = headers;
+  window.__csvCache = {headers, rows};
+  const subjSet = new Set(state.subjects.map(s=>s.name));
+  const idIdx = headers.findIndex(h=>String(h).trim()==="학번");
+  const nameIdx = headers.findIndex(h=>String(h).trim()==="이름");
+  if(idIdx<0 || nameIdx<0){
+    alert("CSV 첫 행에 '학번'과 '이름' 열이 있어야 합니다.");
+    return;
+  }
+  const subjectCols = headers
+    .map((h,i)=>({h:String(h).trim(),i}))
+    .filter(o=>o.i!==idIdx && o.i!==nameIdx);
+
+  const students=[];
+  rows.forEach((cells,rowIdx)=>{
+    const id = String(cells[idIdx]??"").trim();
+    const name = String(cells[nameIdx]??"").trim();
+    if(!id && !name) return; // skip empty line
+    const takes={};
+    subjectCols.forEach(sc=>{
+      const val = String(cells[sc.i]??"").trim();
+      takes[sc.h] = isEnrolled(val);
+    });
+    students.push({id, name, takes, uid:`${id}__${name}__${rowIdx}`});
+  });
+  state.students = students;
+
+  renderStudentsPreview(headers, rows);
+
+  const csvOnly = subjectCols.map(c=>c.h).filter(h=>!subjSet.has(h));
+  const definedOnly = [...subjSet].filter(h=>!subjectCols.map(c=>c.h).includes(h));
+  const summaryEl = document.querySelector('#csvSummary');
+  summaryEl.innerHTML = `
+    학생 ${students.length}명 로드됨.<br>
+    CSV 과목 중 미정의 과목: ${csvOnly.length? `<span class="danger-text">${csvOnly.join(", ")}</span>`:"없음"}<br>
+    정의했으나 CSV에 없는 과목: ${definedOnly.length? `<span class="warn-text">${definedOnly.join(", ")}</span>`:"없음"}
+  `;
+  document.querySelector('#studentsPreviewWrap').style.display="";
+  document.querySelector('#tab2Next').disabled = students.length===0;
+  saveProgress();
+}
+
 
 function parseCSV(text){
   // simple CSV parser with quotes support
