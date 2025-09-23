@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>방과후 정산 도우미</title>
+<style>
+  :root{
+    --bg:#f7f7fb; --card:#fff; --text:#222; --muted:#667085; --accent:#3b82f6;
+    --good:#10b981; --warn:#ef4444; --line:#e5e7eb;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;background:var(--bg);color:var(--text);margin:0}
+  header{padding:20px 20px 0}
+  h1{margin:0 0 6px;font-size:22px}
+  .sub{color:var(--muted);font-size:14px}
+  .container{padding:20px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+  .tab-btn{border:1px solid var(--line);background:var(--card);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600;color:#374151}
+  .tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .tab-btn[disabled]{opacity:.5;cursor:not-allowed}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  label{font-size:13px;color:#475569;display:block;margin-bottom:6px}
+  input[type="text"], input[type="number"]{
+    padding:10px 12px;border:1px solid var(--line);border-radius:10px;min-width:120px;background:#fff;
+  }
+  input[type="file"]{padding:6px 0}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th, td{border-bottom:1px solid var(--line);padding:10px 8px;text-align:center;font-size:14px}
+  th{background:#fafafa;font-weight:700}
+  tfoot td{font-weight:800;background:#fcfcfc}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+  .btn.secondary{background:#e5e7eb;color:#111827}
+  .btn.danger{background:var(--warn);color:#fff}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:#111827}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  .right{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+  .muted{color:var(--muted);font-size:13px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:12px;margin-left:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .note{font-size:13px;color:#475569;background:#f8fafc;border:1px dashed #cbd5e1;padding:10px;border-radius:10px;margin-top:8px}
+  .danger-text{color:var(--warn);font-weight:700}
+  .ok-text{color:var(--good);font-weight:700}
+  .spacer{height:8px}
+  .table-scroll{max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:12px}
+  .small{font-size:12px}
+  .sticky-head thead th{position:sticky;top:0;z-index:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>방과후 정산 도우미</h1>
+  <div class="sub">과목·학생 CSV를 넣고, 수강료/할인/수용비까지 한 번에 계산하세요. <span class="badge" id="saveBadge" style="display:none">자동 저장됨</span></div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="1">1) 과목 입력</button>
+    <button class="tab-btn" data-tab="2" disabled>2) 학생/CSV</button>
+    <button class="tab-btn" data-tab="3" disabled>3) 수강료 배분</button>
+    <button class="tab-btn" data-tab="4" disabled>4) 할인 · 수용비</button>
+    <button class="tab-btn" data-tab="5" disabled>5) 결산</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <section id="tab-1" class="card">
+    <div class="grid">
+      <div>
+        <label>기본 시간당 수업료(원) <span class="badge">예: 35000</span></label>
+        <input type="number" id="defaultRate" value="35000" min="0" step="100">
+      </div>
+      <div>
+        <label>메모(선택)</label>
+        <input type="text" id="memo" placeholder="예: 2025-1학기 방과후">
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+    <div class="row">
+      <button class="btn ghost" id="addSubject">+ 과목 행 추가</button>
+      <button class="btn danger" id="clearSubjects">과목 모두 삭제</button>
+      <button class="btn ghost" id="resetAll">저장데이터 초기화</button>
+      <div class="muted">각 과목은 <b>총 수업시간</b>과 (선택) <b>한 반당 수업시간</b>, (선택) <b>개별 시간당 수업료</b>를 입력할 수 있습니다. 비워두면 기본 수업료가 적용됩니다.</div>
+    </div>
+
+    <div class="table-scroll sticky-head">
+      <table id="subjectsTable">
+        <thead>
+          <tr>
+            <th style="min-width:160px">과목명</th>
+            <th>총 수업시간(시간)</th>
+            <th>한 반당 수업시간(시간)</th>
+            <th>시간당 수업료(원, 선택)</th>
+            <th>삭제</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="right">
+      <button class="btn" id="tab1Next">확인 및 다음 ▶</button>
+    </div>
+    <div class="note small">※ ‘한 반당 수업시간’은 회차 수 산정 등 참고용 입력입니다. 실제 배분은 <b>과목별 총 수업시간</b> 기준으로 계산됩니다.</div>
+  </section>
+
+  <!-- TAB 2 -->
+  <section id="tab-2" class="card" style="display:none">
+    <div class="grid">
+      <div>
+        <label>학생 CSV 업로드</label>
+        <input type="file" id="csvFile" accept=".csv">
+        <div class="muted small">헤더 예시: <code>학번,이름,국어,수학,영어,...</code> / 값: <code>o</code> 또는 비공백 = 수강</div>
+      </div>
+      <div>
+        <label>읽은 학생 수 / 과목 매칭</label>
+        <div class="note" id="csvSummary">아직 업로드되지 않았습니다.</div>
+      </div>
+    </div>
+
+    <div class="table-scroll sticky-head" id="studentsPreviewWrap" style="display:none">
+      <table id="studentsPreview">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="right">
+      <button class="btn secondary" id="back1">◀ 이전</button>
+      <button class="btn" id="tab2Next" disabled>계산으로 이동 ▶</button>
+    </div>
+  </section>
+
+  <!-- TAB 3 -->
+  <section id="tab-3" class="card" style="display:none">
+    <div class="row">
+      <div class="note">
+        <div><b>총 수업료(100원 반올림 기준)</b>: <span id="totalTuition">-</span></div>
+        <div class="small">배분 로직: 학생별 <b>수강 총시간</b>(수강 과목들의 ‘총 수업시간’ 합)에 비례해 <b>총 수업료</b>를 분배합니다. 각 학생의 오른쪽 ‘수강료’는 100원 단위로 반올림되며, <b>라지스트 리마인더 방식</b>으로 총액과 정확히 일치하도록 보정됩니다.</div>
+      </div>
+    </div>
+
+    <div class="table-scroll sticky-head">
+      <table id="allocTable">
+        <thead></thead>
+        <tbody></tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
+
+    <div class="right">
+      <button class="btn secondary" id="back2">◀ 이전</button>
+      <button class="btn" id="tab3Next">다음 ▶</button>
+    </div>
+  </section>
+
+  <!-- TAB 4 -->
+  <section id="tab-4" class="card" style="display:none">
+    <div class="grid">
+      <div class="note">
+        <div><b>총 수업료</b>: <span id="totalTuition2">-</span></div>
+        <div><b>수용비(4~5%) 범위</b>: <span id="facilityRange">-</span></div>
+      </div>
+      <div>
+        <label>수용비율 선택 (4% ~ 5%)</label>
+        <input type="range" id="facilityPct" min="4" max="5" step="0.01" value="4.5" style="width:100%">
+        <div class="muted">현재: <b><span id="facilityPctLabel">4.50%</span></b> → 수용비 총액: <b><span id="facilityTotal">-</span></b></div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+    <div class="row">
+      <div>
+        <label>할인율 일괄입력 (0~1)</label>
+        <div class="row">
+          <input type="number" id="bulkDiscount" value="0" min="0" max="1" step="0.01">
+          <button class="btn ghost" id="applyBulk">모두 적용</button>
+        </div>
+      </div>
+      <div class="muted">할인율 1(=100% 할인) 학생은 수용비 분담에서 제외됩니다.</div>
+    </div>
+
+    <div class="table-scroll sticky-head">
+      <table id="discountTable">
+        <thead>
+          <tr>
+            <th>학번</th><th>이름</th>
+            <th>수강료(100원)</th>
+            <th>할인율</th>
+            <th>할인 후 수강료(100원)</th>
+            <th>수용비 배분(100원)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="text-align:right;font-weight:700">합계</td>
+            <td id="sumDiscFee">-</td>
+            <td id="sumFacility">-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="right">
+      <button class="btn ghost" id="recalcFacility">수용비 재계산</button>
+      <button class="btn secondary" id="back3">◀ 이전</button>
+      <button class="btn" id="finalize">결산 ▶</button>
+    </div>
+  </section>
+
+  <!-- TAB 5 -->
+  <section id="tab-5" class="card" style="display:none">
+    <div class="row">
+      <div class="note">
+        <div><b>총 수업료(100원 반올림 기준)</b>: <span id="sumTotalTuition3">-</span>
+          <span class="badge" id="memoBadge" style="display:none"></span>
+        </div>
+        <div><b>선택한 수용비 총액</b>: <span id="sumFacilityPool">-</span></div>
+      </div>
+    </div>
+
+    <div class="table-scroll sticky-head">
+      <table id="finalTable">
+        <thead>
+          <tr>
+            <th>학번</th><th>이름</th>
+            <th>수강료(100원)</th>
+            <th>할인율</th>
+            <th>할인 후 수강료(100원)</th>
+            <th>수용비(100원)</th>
+            <th>최종 납부액</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="text-align:right;font-weight:700">합계</td>
+            <td id="ftSumBase">-</td>
+            <td>—</td>
+            <td id="ftSumDisc">-</td>
+            <td id="ftSumFac">-</td>
+            <td id="ftSumFinal">-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="right">
+      <button class="btn ghost" id="exportCSV">CSV로 내보내기</button>
+      <button class="btn" onclick="window.print()">인쇄</button>
+    </div>
+    <div class="note small">
+      ※ 수강료/수용비는 100원 단위 반올림 및 총액 보정(라지스트 리마인더 방식)으로 분배됩니다. 학생별 과목 교차 셀은 학생의 전체 수강료를 <b>해당 학생이 수강한 과목의 총시간 비율</b>로 분해한 표시이며, 과목별 열 합계가 과목 총비용과 일치하지 않을 수 있습니다.
+    </div>
+  </section>
+</div>
+
+<script>
+// =====================
+// 상태 & 포맷터
+// =====================
+const state = {
+  memo: "",
+  defaultRate: 35000,
+  subjects: [], // {name, totalHours, perClassHours, hourlyRate?}
+  students: [], // {id, name, takes: { [subjectName]: true/false }, uid}
+  // computed:
+  totalTuition: 0,              // 원금(반올림 전)
+  totalTuitionRounded: 0,       // 100원 반올림 기준 목표액
+  hoursByStudent: [],           // H_i
+  baseFeeRaw: [],               // unrounded
+  baseFeeRounded: [],           // 100원 반올림 + 라지스트 리마인더 보정
+  perCellAlloc: [],             // [{ subjName: amount, ... }]
+  discounts: [],                // per student 0..1
+  facilityPct: 4.5,             // %
+  facilityPool: 0,              // 100원 반올림
+  facilityAlloc: [],            // per student 100원 단위
+  discountedFee: [],            // per student 100원 단위 (after discount)
+};
+
+let currentTab = 1;
+
+const KRW = new Intl.NumberFormat('ko-KR', {maximumFractionDigits:0});
+const fmt = n => KRW.format(Math.round(n)) + "원";
+const r100 = n => Math.round((+n||0)/100)*100;
+const STORAGE_KEY = 'afs_progress_v1';
+
+// CSV 캐시(미리보기 복원용)
+window.__csvCache = null; // {headers, rows}
+
+function switchTab(n){
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    const active = +b.dataset.tab===n;
+    b.classList.toggle('active', active);
+  });
+  document.querySelectorAll('section[id^="tab-"]').forEach(s=>{
+    s.style.display = s.id === `tab-${n}` ? '' : 'none';
+  });
+  currentTab = n;
+  saveProgress();
+}
+
+// [추가] 탭 버튼 클릭 시 탭 이동 (disabled면 무시)
+document.querySelectorAll('.tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (btn.disabled) return;
+    switchTab(+btn.dataset.tab);
+  });
+});
+
+
+
+function enableTab(n, enabled=true){
+  const btn = document.querySelector(`.tab-btn[data-tab="${n}"]`);
+  if(btn) btn.disabled = !enabled;
+}
+
+function showSavedBadge(){
+  const b = document.getElementById('saveBadge');
+  b.style.display = 'inline-block';
+  clearTimeout(showSavedBadge._t);
+  showSavedBadge._t = setTimeout(()=> b.style.display='none', 1200);
+}
+
+function saveProgress(){
+  try{
+    const snapshot = {
+      version: 1,
+      currentTab,
+      memo: state.memo,
+      defaultRate: state.defaultRate,
+      subjects: state.subjects,
+      students: state.students,
+      discounts: state.discounts,
+      facilityPct: state.facilityPct,
+      csv: window.__csvCache,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    showSavedBadge();
+  }catch(e){ console.warn('저장 실패:', e); }
+}
+
+function restoreProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const snap = JSON.parse(raw);
+    if(!snap || !snap.version) return false;
+
+    // 기본값 복원
+    state.memo = snap.memo || "";
+    state.defaultRate = +snap.defaultRate || 0;
+    document.getElementById('memo').value = state.memo;
+    document.getElementById('defaultRate').value = state.defaultRate;
+
+    // 과목 테이블 복원
+    if(Array.isArray(snap.subjects)){
+      document.querySelector('#subjectsTable tbody').innerHTML = '';
+      snap.subjects.forEach(s=> addSubjectRow(s));
+      state.subjects = snap.subjects;
+    }
+
+    // 학생/CSV 복원
+    if(Array.isArray(snap.students) && snap.students.length){
+      state.students = snap.students;
+      if(snap.csv && snap.csv.headers && snap.csv.rows){
+        window.__csvCache = snap.csv;
+        renderStudentsPreview(snap.csv.headers, snap.csv.rows);
+        document.getElementById('studentsPreviewWrap').style.display = '';
+      }
+      enableTab(2,true);
+      document.getElementById('tab2Next').disabled = false;
+
+      // 배분 재계산 & 표시
+      computeAllocations();
+      renderAllocTable();
+      enableTab(3,true);
+
+      // 할인/수용비 복원
+      if(Array.isArray(snap.discounts) && snap.discounts.length===state.students.length){
+        state.discounts = snap.discounts.map(v=> +v||0);
+      } else {
+        initDiscounts();
+      }
+      state.facilityPct = +(snap.facilityPct ?? state.facilityPct);
+      document.getElementById('facilityPct').value = state.facilityPct;
+      updateFacilityWidgets();
+      renderDiscountTable();
+      enableTab(4,true);
+
+      // 최종표도 준비
+      renderFinalTable();
+      enableTab(5,true);
+    }
+
+    // 마지막 탭으로 이동
+    if(snap.currentTab) switchTab(snap.currentTab);
+
+    return true;
+  }catch(e){ console.warn('복원 실패:', e); return false; }
+}
+
+/* ---------- TAB1: Subjects ---------- */
+const subjectsTbody = document.querySelector('#subjectsTable tbody');
+document.querySelector('#addSubject').addEventListener('click', addSubjectRow);
+document.querySelector('#clearSubjects').addEventListener('click', ()=>{
+  subjectsTbody.innerHTML = "";
+  state.subjects = [];
+  saveProgress();
+});
+document.querySelector('#resetAll').addEventListener('click', ()=>{
+  if(confirm('저장된 진행상황을 모두 삭제하고 새로 시작할까요?')){
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+});
+
+document.querySelector('#tab1Next').addEventListener('click', ()=>{
+  readSubjectsFromTable();
+  state.memo = document.querySelector('#memo').value.trim();
+  state.defaultRate = +document.querySelector('#defaultRate').value || 0;
+  if(state.subjects.length===0){
+    alert("과목을 1개 이상 입력하세요.");
+    return;
+  }
+  // Validate hours
+  for(const s of state.subjects){
+    if(!s.name){ alert("과목명은 비워둘 수 없습니다."); return; }
+    if(!(s.totalHours>0)){ alert(`과목 '${s.name}'의 총 수업시간을 올바르게 입력하세요.`); return; }
+  }
+  enableTab(2,true);
+  saveProgress();
+  switchTab(2);
+});
+
+function addSubjectRow(s={name:"", totalHours:"", perClassHours:"", hourlyRate:""}){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" placeholder="과목명" value="${s.name??""}"></td>
+    <td><input type="number" min="0" step="0.5" placeholder="예: 10" value="${s.totalHours??""}"></td>
+    <td><input type="number" min="0" step="0.5" placeholder="예: 2 (선택)" value="${s.perClassHours??""}"></td>
+    <td><input type="number" min="0" step="100" placeholder="기본 사용" value="${s.hourlyRate??""}"></td>
+    <td><button class="btn danger small-btn">삭제</button></td>
+  `;
+  tr.querySelector('.danger').addEventListener('click', ()=>{ tr.remove(); readSubjectsFromTable(); saveProgress(); });
+  // 입력 변경 시 자동 저장
+  tr.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('change', ()=>{ readSubjectsFromTable(); saveProgress(); });
+  });
+  subjectsTbody.appendChild(tr);
+}
+
+function readSubjectsFromTable(){
+  const rows = subjectsTbody.querySelectorAll('tr');
+  const list = [];
+  rows.forEach(r=>{
+    const [nameEl, totEl, perEl, rateEl] = r.querySelectorAll('input');
+    const name = nameEl.value.trim();
+    const totalHours = +totEl.value || 0;
+    const perClassHours = +perEl.value || 0;
+    const hourlyRate = rateEl.value==="" ? null : (+rateEl.value || null); // null means use default
+    if(name) list.push({name, totalHours, perClassHours, hourlyRate});
+  });
+  state.subjects = list;
+}
+
+/* Prefill a couple rows to guide (초기 복원 없을 때만) */
+(function prefill(){
+  const hasSaved = !!localStorage.getItem(STORAGE_KEY);
+  if(!hasSaved){
+    addSubjectRow({name:"국어", totalHours:"10"});
+    addSubjectRow({name:"수학", totalHours:"5"});
+  }
+})();
+
+/* ---------- TAB2: CSV Students ---------- */
+let csvHeaders=[];
+document.querySelector('#back1').addEventListener('click', ()=>switchTab(1));
+document.querySelector('#csvFile').addEventListener('change', handleCSV);
+document.querySelector('#tab2Next').addEventListener('click', ()=>{
+  computeAllocations();
+  renderAllocTable();
+  enableTab(3,true);
+  saveProgress();
+  switchTab(3);
+});
+
+function handleCSV(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = reader.result;
+    const {headers, rows} = parseCSV(text);
+    csvHeaders = headers;
+    window.__csvCache = {headers, rows};
+    const subjSet = new Set(state.subjects.map(s=>s.name));
+    // columns: must include '학번','이름'
+    const idIdx = headers.findIndex(h=>h.trim()==="학번");
+    const nameIdx = headers.findIndex(h=>h.trim()==="이름");
+    if(idIdx<0 || nameIdx<0){
+      alert("CSV 첫 행에 '학번'과 '이름' 열이 있어야 합니다.");
+      return;
+    }
+    const subjectCols = headers
+      .map((h,i)=>({h:h.trim(),i}))
+      .filter(o=>o.i!==idIdx && o.i!==nameIdx);
+    const students=[];
+    rows.forEach((cells,rowIdx)=>{
+      const id = (cells[idIdx]??"").trim();
+      const name = (cells[nameIdx]??"").trim();
+      if(!id && !name) return; // skip empty line
+      const takes={};
+      subjectCols.forEach(sc=>{
+        const val = (cells[sc.i]??"").trim();
+        takes[sc.h] = isEnrolled(val);
+      });
+      students.push({id, name, takes, uid:`${id}__${name}__${rowIdx}`});
+    });
+    state.students = students;
+
+    // Preview
+    renderStudentsPreview(headers, rows);
+
+    // Summary + subject matching warning
+    const csvOnly = subjectCols.map(c=>c.h).filter(h=>!subjSet.has(h));
+    const definedOnly = [...subjSet].filter(h=>!subjectCols.map(c=>c.h).includes(h));
+    const summaryEl = document.querySelector('#csvSummary');
+    summaryEl.innerHTML = `
+      학생 ${students.length}명 로드됨.<br>
+      CSV 과목 중 미정의 과목: ${csvOnly.length? `<span class="danger-text">${csvOnly.join(", ")}</span>`:"없음"}<br>
+      정의했으나 CSV에 없는 과목: ${definedOnly.length? `<span class="warn-text">${definedOnly.join(", ")}</span>`:"없음"}
+    `;
+    document.querySelector('#studentsPreviewWrap').style.display="";
+    document.querySelector('#tab2Next').disabled = students.length===0;
+    saveProgress();
+  };
+  reader.readAsText(file, {type: "text/csv; charset=utf-8"});
+}
+
+function parseCSV(text){
+  // simple CSV parser with quotes support
+  const lines = text.replace(/\r\n?/g,"\n").split("\n");
+  const rows=[];
+  let headers=[];
+  for(let li=0; li<lines.length; li++){
+    const line = lines[li];
+    if(li===0){ headers = splitCSVLine(line); continue; }
+    const cells = splitCSVLine(line);
+    if(cells.every(c=>!c.trim())) continue;
+    rows.push(cells);
+  }
+  return {headers, rows};
+}
+function splitCSVLine(line){
+  const out=[]; let cur=""; let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch === '"' ){
+      if(inQ && line[i+1]==='"'){ cur+='"'; i++; }
+      else inQ=!inQ;
+    }else if(ch===',' && !inQ){
+      out.push(cur); cur="";
+    }else{
+      cur+=ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+function isEnrolled(v){
+  if(!v) return false;
+  const s = String(v).trim().toLowerCase();
+  return !!s && s!=="0" && s!=="x" && s!=="no" && s!=="n";
+}
+function renderStudentsPreview(headers, rows){
+  const thead = document.querySelector('#studentsPreview thead');
+  const tbody = document.querySelector('#studentsPreview tbody');
+  thead.innerHTML = `<tr>${headers.map(h=>`<th>${h.trim()}</th>`).join("")}</tr>`;
+  tbody.innerHTML = rows.slice(0,100).map(r=>`<tr>${headers.map((_,i)=>`<td>${(r[i]??"").toString().replace(/</g,"&lt;")}</td>`).join("")}</tr>`).join("");
+}
+
+/* ---------- TAB3: Allocation ---------- */
+document.querySelector('#back2').addEventListener('click', ()=>switchTab(2));
+document.querySelector('#tab3Next').addEventListener('click', ()=>{
+  initDiscounts();
+  renderDiscountTable();
+  updateFacilityWidgets();
+  enableTab(4,true);
+  saveProgress();
+  switchTab(4);
+});
+
+function computeAllocations(){
+  // total tuition = sum(subject.totalHours * rate)  (총액 계산은 기존과 동일)
+  const rateOf = s => (s.hourlyRate ?? state.defaultRate);
+  const total = state.subjects.reduce((acc,s)=>acc + (s.totalHours||0) * rateOf(s), 0);
+  state.totalTuition = total;
+  state.totalTuitionRounded = r100(total);
+
+  // ⬇️ 학생 가중치: '총 수업시간' 대신 '한 반당 수업시간(perClassHours)' 합계로 계산
+  const subjIndex = new Map(state.subjects.map(s=>[s.name, s]));
+  const H = state.students.map(st=>{
+    let h=0;
+    for(const [sn,t] of Object.entries(st.takes)){
+      if(!t) continue;
+      if(!subjIndex.has(sn)) continue;
+      h += (subjIndex.get(sn).perClassHours || 0); // CHANGED
+    }
+    return h;
+  });
+  state.hoursByStudent = H;
+  const Htot = H.reduce((a,b)=>a+b,0);
+
+  // base fee raw by perClassHours share
+  const baseRaw = H.map(h=> Htot>0 ? total * (h/Htot) : 0);
+  state.baseFeeRaw = baseRaw;
+
+  // per-cell allocation: 학생의 perClassHours 비율로 과목별 분해
+  const perCell = state.students.map((st,idx)=>{
+    const rowAlloc={};
+    const studentHours = H[idx];
+    const base = baseRaw[idx];
+    if(studentHours<=0){
+      for(const s of state.subjects) rowAlloc[s.name]=0;
+      return rowAlloc;
+    }
+    for(const s of state.subjects){
+      if(st.takes[s.name]){
+        const part = base * ((s.perClassHours || 0) / studentHours); // CHANGED
+        rowAlloc[s.name] = part;
+      }else{
+        rowAlloc[s.name] = 0;
+      }
+    }
+    return rowAlloc;
+  });
+  state.perCellAlloc = perCell;
+
+  // 100원 반올림 + 라지스트 리마인더 보정
+  const initialRounded = baseRaw.map(r100);
+  const target = state.totalTuitionRounded;
+  const lrm = largestRemainderHundreds(baseRaw, initialRounded, target);
+  state.baseFeeRounded = lrm;
+}
+
+
+function largestRemainderHundreds(rawVals, roundedVals, targetSum){
+  const out = roundedVals.slice();
+  let diff = targetSum - out.reduce((a,b)=>a+b,0);
+  if(diff === 0) return out;
+  const infos = rawVals.map((v,i)=>({
+    i,
+    frac: (v/100 - Math.floor(v/100)),
+    positive: v>0
+  }));
+  if(diff>0){
+    // 가장 큰 소수부부터 +100 부여 (수강시간>0인 학생만)
+    infos.sort((a,b)=> b.frac - a.frac);
+    for(let k=0; k<infos.length && diff>0; k++){
+      const {i, positive} = infos[k];
+      if(!positive) continue;
+      out[i]+=100; diff-=100;
+    }
+    // 남으면 다시 순환 분배
+    let idx=0;
+    while(diff>0 && infos.length){
+      const {i, positive} = infos[idx % infos.length];
+      if(positive){ out[i]+=100; diff-=100; }
+      idx++;
+    }
+  }else{
+    // 가장 작은 소수부부터 -100 차감 (0 미만은 불가)
+    infos.sort((a,b)=> a.frac - b.frac);
+    for(let k=0; k<infos.length && diff<0; k++){
+      const {i} = infos[k];
+      if(out[i]>=100){ out[i]-=100; diff+=100; }
+    }
+    // 남으면 다시 순환 차감
+    let idx=0;
+    while(diff<0 && infos.length){
+      const {i} = infos[idx % infos.length];
+      if(out[i]>=100){ out[i]-=100; diff+=100; }
+      idx++;
+    }
+  }
+  return out;
+}
+
+function renderAllocTable(){
+  document.querySelector('#totalTuition').textContent = fmt(state.totalTuitionRounded);
+  const table = document.querySelector('#allocTable');
+  const thead = table.querySelector('thead');
+  const tbody = table.querySelector('tbody');
+  const tfoot = table.querySelector('tfoot');
+  const subj = state.subjects.map(s=>s.name);
+  thead.innerHTML = `
+    <tr>
+      <th style="min-width:100px">학번</th>
+      <th style="min-width:100px">이름</th>
+      ${subj.map(s=>`<th>${s}</th>`).join("")}
+      <th>수강료(100원)</th>
+    </tr>
+  `;
+  tbody.innerHTML = state.students.map((st,i)=>{
+    // 과목별 값들을 반드시 <td>로 감싸서 열이 맞도록 출력
+    const cells = subj
+      .map(s => `<td>${fmt(state.perCellAlloc[i][s] || 0)}</td>`)
+      .join("");
+     return `
+       <tr>
+         <td>${st.id||""}</td>
+         <td>${st.name||""}</td>
+         ${cells}
+         <td><b>${fmt(state.baseFeeRounded[i])}</b></td>
+       </tr>
+     `;
+  }).join("");
+  // footer: 참고 합계
+  const colSums = subj.map((s,si)=> state.students.reduce((acc,_,ri)=> acc + (state.perCellAlloc[ri][s]||0), 0) );
+  const grand = state.baseFeeRounded.reduce((a,b)=>a+b,0);
+  tfoot.innerHTML = `
+    <tr>
+      <td colspan="2" style="text-align:right;font-weight:700">표시 합계</td>
+      ${colSums.map(v=>`<td>${fmt(v)}</td>`).join("")}
+      <td>${fmt(grand)}</td>
+    </tr>
+  `;
+  saveProgress();
+}
+
+/* ---------- TAB4: Discounts & Facility ---------- */
+document.querySelector('#back3').addEventListener('click', ()=>switchTab(3));
+document.querySelector('#applyBulk').addEventListener('click', ()=>{
+  const v = +document.querySelector('#bulkDiscount').value;
+  if(!(v>=0 && v<=1)){ alert("할인율은 0~1 사이로 입력하세요."); return; }
+  state.discounts = state.discounts.map(()=>v);
+  renderDiscountTable(); // will also recompute facility
+  saveProgress();
+});
+document.querySelector('#facilityPct').addEventListener('input', ()=>{
+  state.facilityPct = +document.querySelector('#facilityPct').value;
+  updateFacilityWidgets();
+  recomputeFacility();
+  saveProgress();
+});
+document.querySelector('#recalcFacility').addEventListener('click', ()=>{ recomputeFacility(); saveProgress(); });
+document.querySelector('#finalize').addEventListener('click', ()=>{
+  renderFinalTable();
+  enableTab(5,true);
+  saveProgress();
+  switchTab(5);
+});
+
+function initDiscounts(){
+  if(!state.discounts || state.discounts.length!==state.students.length){
+    state.discounts = state.students.map(()=>0);
+  }
+}
+
+function updateFacilityWidgets(){
+  document.querySelector('#totalTuition2').textContent = fmt(state.totalTuition);
+  const min = 0.04*state.totalTuition;
+  const max = 0.05*state.totalTuition;
+  document.querySelector('#facilityRange').textContent = `${fmt(min)} ~ ${fmt(max)}`;
+  document.querySelector('#facilityPctLabel').textContent = state.facilityPct.toFixed(2)+"%";
+  const poolRaw = state.totalTuition * state.facilityPct/100;
+  document.querySelector('#facilityTotal').textContent = fmt(poolRaw);
+}
+
+function renderDiscountTable(){
+  // compute discounted fees from baseFeeRounded
+  state.discountedFee = state.baseFeeRounded.map((base,i)=> r100(base * (1 - (state.discounts[i]||0))) );
+  recomputeFacility(); // also renders table body
+}
+
+function recomputeFacility(){
+  // Facility pool rounded to 100
+  const pool = r100(state.totalTuition * state.facilityPct/100);
+  state.facilityPool = pool;
+
+  // weights: discounted fee; exclude discount==1
+  const weights = state.discountedFee.map((df,i)=> (state.discounts[i]===1 ? 0 : df));
+  const W = weights.reduce((a,b)=>a+b,0);
+  const rawShares = weights.map(w=> W>0 ? (pool * (w/W)) : 0);
+
+  // round to 100 & largest remainder fix to match pool exactly
+  const rounded = rawShares.map(r100);
+  let diff = pool - rounded.reduce((a,b)=>a+b,0);
+
+  if(Math.abs(diff)>=100){
+    const rema = rawShares.map((r,i)=> ({i, frac: (r/100 - Math.floor(r/100))}));
+    if(diff>0){
+      rema.sort((a,b)=> b.frac - a.frac);
+      for(let k=0; k<rema.length && diff>0; k++){
+        const i = rema[k].i;
+        if(weights[i]===0) continue; // skip excluded
+        rounded[i]+=100; diff-=100;
+      }
+    }else if(diff<0){
+      rema.sort((a,b)=> a.frac - b.frac);
+      for(let k=0; k<rema.length && diff<0; k++){
+        const i = rema[k].i;
+        if(rounded[i]===0) continue;
+        rounded[i]-=100; diff+=100;
+      }
+    }
+  }
+  state.facilityAlloc = rounded;
+
+  // render table
+  const tbody = document.querySelector('#discountTable tbody');
+  tbody.innerHTML = state.students.map((st,i)=>`
+    <tr>
+      <td>${st.id||""}</td>
+      <td>${st.name||""}</td>
+      <td>${fmt(state.baseFeeRounded[i])}</td>
+      <td>
+        <input type="number" min="0" max="1" step="0.01" value="${state.discounts[i]}" data-di="${i}" class="discInput" style="width:90px">
+      </td>
+      <td>${fmt(state.discountedFee[i])}</td>
+      <td>${fmt(state.facilityAlloc[i])}</td>
+    </tr>
+  `).join("");
+  tbody.querySelectorAll('.discInput').forEach(inp=>{
+    inp.addEventListener('change', (e)=>{
+      const i = +e.target.dataset.di;
+      let v = +e.target.value;
+      if(!(v>=0 && v<=1)){ alert("할인율은 0~1 사이로 입력하세요."); e.target.value = state.discounts[i]; return; }
+      state.discounts[i]=v;
+      renderDiscountTable();
+      saveProgress();
+    });
+  });
+
+  document.querySelector('#sumDiscFee').textContent = fmt(state.discountedFee.reduce((a,b)=>a+b,0));
+  document.querySelector('#sumFacility').textContent = fmt(state.facilityAlloc.reduce((a,b)=>a+b,0));
+}
+
+/* ---------- TAB5: Final ---------- */
+function renderFinalTable(){
+  document.querySelector('#sumTotalTuition3').textContent = fmt(state.totalTuitionRounded);
+  document.querySelector('#sumFacilityPool').textContent = fmt(state.facilityPool);
+  const mb = document.querySelector('#memoBadge');
+  if(state.memo){ mb.style.display="inline-block"; mb.textContent = state.memo; }
+
+  const tbody = document.querySelector('#finalTable tbody');
+  tbody.innerHTML = state.students.map((st,i)=>{
+    const base = state.baseFeeRounded[i];
+    const disc = state.discountedFee[i];
+    const fac = state.facilityAlloc[i];
+    const final = disc + fac;
+    return `
+      <tr>
+        <td>${st.id||""}</td>
+        <td>${st.name||""}</td>
+        <td>${fmt(base)}</td>
+        <td>${(state.discounts[i]||0).toFixed(2)}</td>
+        <td>${fmt(disc)}</td>
+        <td>${fmt(fac)}</td>
+        <td><b>${fmt(final)}</b></td>
+      </tr>
+    `;
+  }).join("");
+
+  const sumBase = state.baseFeeRounded.reduce((a,b)=>a+b,0);
+  const sumDisc = state.discountedFee.reduce((a,b)=>a+b,0);
+  const sumFac  = state.facilityAlloc.reduce((a,b)=>a+b,0);
+  const sumFinal= sumDisc + sumFac;
+  document.querySelector('#ftSumBase').textContent  = fmt(sumBase);
+  document.querySelector('#ftSumDisc').textContent  = fmt(sumDisc);
+  document.querySelector('#ftSumFac').textContent   = fmt(sumFac);
+  document.querySelector('#ftSumFinal').textContent = fmt(sumFinal);
+}
+
+/* ---------- Export CSV ---------- */
+document.querySelector('#exportCSV').addEventListener('click', ()=>{
+  // Final per-student CSV
+  const header = ["학번","이름","수강료(100원)","할인율","할인 후 수강료(100원)","수용비(100원)","최종 납부액"];
+  const rows = state.students.map((st,i)=>[
+    st.id, st.name,
+    state.baseFeeRounded[i],
+    (state.discounts[i]||0).toFixed(2),
+    state.discountedFee[i],
+    state.facilityAlloc[i],
+    state.discountedFee[i]+state.facilityAlloc[i]
+  ]);
+  const csv = [header, ...rows].map(r=>r.map(escapeCSV).join(",")).join("\r\n");
+  download("결산_최종.csv", "\ufeff"+csv);
+
+  // Optional: per-student per-subject breakdown
+  const subj = state.subjects.map(s=>s.name);
+  const header2 = ["학번","이름",...subj,"수강료(100원)"];
+  const rows2 = state.students.map((st,i)=>[
+    st.id, st.name, ...subj.map(s=>Math.round(state.perCellAlloc[i][s]||0)), state.baseFeeRounded[i]
+  ]);
+  const csv2 = [header2, ...rows2].map(r=>r.map(escapeCSV).join(",")).join("\r\n");
+  download("과목별_배분_표시값.csv", "\ufeff"+csv2);
+});
+function escapeCSV(v){
+  const s = String(v??"");
+  return (/[",\n]/.test(s)) ? `"${s.replace(/"/g,'""')}"` : s;
+}
+function download(filename, content){
+  const blob = new Blob([content], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- INIT ---------- */
+function bootstrap(){
+  // If user edits defaultRate later, it applies from next computation step
+  document.querySelector('#defaultRate').addEventListener('change', e=>{
+    const v = +e.target.value; if(!(v>=0)){ e.target.value = state.defaultRate; return; }
+    state.defaultRate = v; saveProgress();
+  });
+  document.querySelector('#memo').addEventListener('change', e=>{ state.memo = e.target.value.trim(); saveProgress(); });
+
+  // 복원 시도
+  const restored = restoreProgress();
+  if(!restored){
+    // 초기 저장 상태 기록
+    saveProgress();
+  }
+}
+bootstrap();
+</script>
+</body>
+</html>
