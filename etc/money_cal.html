@@ -82,7 +82,6 @@
       <button class="btn ghost" id="addSubject">+ 과목 행 추가</button>
       <button class="btn danger" id="clearSubjects">과목 모두 삭제</button>
       <button class="btn ghost" id="resetAll">저장데이터 초기화</button>
-      <button type="button" class="btn ghost" onclick="window.location.href='money_cal_sample.xlsx'">샘플 다운로드</button>
       <div class="muted">각 과목은 <b>총 수업시간</b>과 (선택) <b>개별 시간당 수업료</b>만 입력하면 됩니다.</div>
     </div>
 
@@ -113,6 +112,7 @@
         <label>학생 CSV 업로드</label>
         <input type="file" id="csvFile" accept=".csv,.xls,.xlsx">
         <div class="muted small">헤더 예시: <code>학번,이름,국어,수학,영어,...</code> / 값: <code>o</code> 또는 비공백 = 수강</div>
+        <button type="button" class="btn ghost" onclick="window.location.href='money_cal_sample.xlsx'">샘플 다운로드</button>
       </div>
       <div>
         <label>읽은 학생 수 / 과목 매칭</label>
@@ -934,4 +934,5 @@ bootstrap();
 </script>
 </body>
 </html>
+
 
