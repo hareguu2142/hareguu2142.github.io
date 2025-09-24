@@ -232,6 +232,7 @@
             <th>수강료(100원)</th>
             <th>할인율</th>
             <th>할인 후 수강료(100원)</th>
+            <th>지원금액</th> <!-- ✅ 추가 -->
             <th>수용비(100원)</th>
             <th>최종 납부액</th>
           </tr>
@@ -243,6 +244,7 @@
             <td id="ftSumBase">-</td>
             <td>—</td>
             <td id="ftSumDisc">-</td>
+            <td id="ftSumSupport">-</td> <!-- ✅ 추가 -->
             <td id="ftSumFac">-</td>
             <td id="ftSumFinal">-</td>
           </tr>
@@ -877,6 +879,7 @@ function renderFinalTable(){
   tbody.innerHTML = state.students.map((st,i)=>{
     const base = state.baseFeeRounded[i];
     const disc = state.discountedFee[i];
+    const support = base - disc;           // ✅ 지원금액
     const fac = state.facilityAlloc[i];
     const final = disc + fac;
     return `
@@ -886,33 +889,47 @@ function renderFinalTable(){
         <td>${fmt(base)}</td>
         <td>${(state.discounts[i]||0).toFixed(2)}</td>
         <td>${fmt(disc)}</td>
+        <td>${fmt(support)}</td>
         <td>${fmt(fac)}</td>
         <td><b>${fmt(final)}</b></td>
       </tr>
     `;
   }).join("");
 
-  const sumBase = state.baseFeeRounded.reduce((a,b)=>a+b,0);
-  const sumDisc = state.discountedFee.reduce((a,b)=>a+b,0);
-  const sumFac  = state.facilityAlloc.reduce((a,b)=>a+b,0);
-  const sumFinal= sumDisc + sumFac;
-  document.querySelector('#ftSumBase').textContent  = fmt(sumBase);
-  document.querySelector('#ftSumDisc').textContent  = fmt(sumDisc);
-  document.querySelector('#ftSumFac').textContent   = fmt(sumFac);
-  document.querySelector('#ftSumFinal').textContent = fmt(sumFinal);
+  const sumBase    = state.baseFeeRounded.reduce((a,b)=>a+b,0);
+  const sumDisc    = state.discountedFee.reduce((a,b)=>a+b,0);
+  const sumSupport = sumBase - sumDisc;                      // ✅ 지원금액 합계
+  const sumFac     = state.facilityAlloc.reduce((a,b)=>a+b,0);
+  const sumFinal   = sumDisc + sumFac;
+
+  document.querySelector('#ftSumBase').textContent     = fmt(sumBase);
+  document.querySelector('#ftSumDisc').textContent     = fmt(sumDisc);
+  document.querySelector('#ftSumSupport').textContent  = fmt(sumSupport); // ✅
+  document.querySelector('#ftSumFac').textContent      = fmt(sumFac);
+  document.querySelector('#ftSumFinal').textContent    = fmt(sumFinal);
 }
+
 
 /* ---------- Export CSV ---------- */
 document.querySelector('#exportCSV').addEventListener('click', ()=>{
-  const header = ["학번","이름","수강료(100원)","할인율","할인 후 수강료(100원)","수용비(100원)","최종 납부액"];
-  const rows = state.students.map((st,i)=>[
-    st.id, st.name,
-    state.baseFeeRounded[i],
-    (state.discounts[i]||0).toFixed(2),
-    state.discountedFee[i],
-    state.facilityAlloc[i],
-    state.discountedFee[i]+state.facilityAlloc[i]
-  ]);
+  // ✅ 최종 결산 CSV 헤더에 '지원금액' 추가
+  const header = ["학번","이름","수강료(100원)","할인율","할인 후 수강료(100원)","지원금액","수용비(100원)","최종 납부액"];
+  const rows = state.students.map((st,i)=>{
+    const base    = state.baseFeeRounded[i];
+    const disc    = state.discountedFee[i];
+    const support = base - disc;                  // ✅ 지원금액
+    const fac     = state.facilityAlloc[i];
+    const final   = disc + fac;
+    return [
+      st.id, st.name,
+      base,
+      (state.discounts[i]||0).toFixed(2),
+      disc,
+      support,                                    // ✅ 추가
+      fac,
+      final
+    ];
+  });
   const csv = [header, ...rows].map(r=>r.map(escapeCSV).join(",")).join("\r\n");
   download("결산_최종.csv", "\ufeff"+csv);
 
@@ -953,5 +970,6 @@ bootstrap();
 </script>
 </body>
 </html>
+
 
 
