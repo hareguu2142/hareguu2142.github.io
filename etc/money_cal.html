@@ -190,6 +190,7 @@
             <th>수강료(100원)</th>
             <th>할인율</th>
             <th>할인 후 수강료(100원)</th>
+            <th>지원금액</th>
             <th>수용비 배분(100원)</th>
           </tr>
         </thead>
@@ -198,6 +199,7 @@
           <tr>
             <td colspan="4" style="text-align:right;font-weight:700">합계</td>
             <td id="sumDiscFee">-</td>
+            <td id="sumSupport">-</td>
             <td id="sumFacility">-</td>
           </tr>
         </tfoot>
@@ -819,19 +821,28 @@ function recomputeFacility(){
   }
   state.facilityAlloc = rounded;
 
+  // 표 렌더링 (지원금액 추가)
   const tbody = document.querySelector('#discountTable tbody');
-  tbody.innerHTML = state.students.map((st,i)=>`
-    <tr>
-      <td>${st.id||""}</td>
-      <td>${st.name||""}</td>
-      <td>${fmt(state.baseFeeRounded[i])}</td>
-      <td>
-        <input type="number" min="0" max="1" step="0.01" value="${state.discounts[i]}" data-di="${i}" class="discInput" style="width:90px">
-      </td>
-      <td>${fmt(state.discountedFee[i])}</td>
-      <td>${fmt(state.facilityAlloc[i])}</td>
-    </tr>
-  `).join("");
+  tbody.innerHTML = state.students.map((st,i)=>{
+    const base = state.baseFeeRounded[i];
+    const disc = state.discountedFee[i];
+    const support = base - disc; // ✅ 지원금액 = 수강료(100원) - 할인 후 수강료(100원)
+    const fac = state.facilityAlloc[i];
+    return `
+      <tr>
+        <td>${st.id||""}</td>
+        <td>${st.name||""}</td>
+        <td>${fmt(base)}</td>
+        <td>
+          <input type="number" min="0" max="1" step="0.01" value="${state.discounts[i]}" data-di="${i}" class="discInput" style="width:90px">
+        </td>
+        <td>${fmt(disc)}</td>
+        <td>${fmt(support)}</td>
+        <td>${fmt(fac)}</td>
+      </tr>
+    `;
+  }).join("");
+
   tbody.querySelectorAll('.discInput').forEach(inp=>{
     inp.addEventListener('change', (e)=>{
       const i = +e.target.dataset.di;
@@ -843,9 +854,17 @@ function recomputeFacility(){
     });
   });
 
-  document.querySelector('#sumDiscFee').textContent = fmt(state.discountedFee.reduce((a,b)=>a+b,0));
-  document.querySelector('#sumFacility').textContent = fmt(state.facilityAlloc.reduce((a,b)=>a+b,0));
+  // 하단 합계(할인 후 수강료 / 지원금액 / 수용비)
+  const sumDisc = state.discountedFee.reduce((a,b)=>a+b,0);
+  const sumBase = state.baseFeeRounded.reduce((a,b)=>a+b,0);
+  const sumSupport = sumBase - sumDisc;
+  const sumFac = state.facilityAlloc.reduce((a,b)=>a+b,0);
+
+  document.querySelector('#sumDiscFee').textContent = fmt(sumDisc);
+  document.querySelector('#sumSupport').textContent = fmt(sumSupport);
+  document.querySelector('#sumFacility').textContent = fmt(sumFac);
 }
+
 
 /* ---------- TAB5: Final ---------- */
 function renderFinalTable(){
@@ -934,5 +953,6 @@ bootstrap();
 </script>
 </body>
 </html>
+
 
 
