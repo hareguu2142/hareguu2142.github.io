@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 단어 관리 도구</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --highlight-color: #ff3860;
+            --primary-color: #3273dc;
+        }
+
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+        }
+
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #eee;
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 5px;
+            flex-grow: 1;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary { background-color: var(--primary-color); }
+        .btn-primary:hover { background-color: #2366d1; }
+        
+        .btn-success { background-color: #23d160; }
+        .btn-success:hover { background-color: #20bc56; }
+
+        .btn-upload {
+            background-color: #ffdd57;
+            color: #333;
+        }
+        .btn-upload:hover { background-color: #ffc600; }
+
+        /* 실제 파일 인풋 숨기기 */
+        #fileInput { display: none; }
+
+        #status {
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #666;
+            text-align: right;
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+
+        .word-item {
+            background-color: #eef3fc;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            border: 1px solid #dce6f7;
+            transition: all 0.3s ease;
+        }
+
+        /* 중복 강조 스타일 */
+        .word-item.duplicate-error {
+            background-color: var(--highlight-color) !important;
+            color: white !important;
+            border-color: #d32f2f !important;
+            font-weight: bold;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>JSON 단어 관리자</h1>
+
+    <div class="control-panel">
+        <!-- 업로드 영역 -->
+        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">📂 JSON 열기</button>
+        <input type="file" id="fileInput" accept=".json">
+
+        <!-- 저장 영역 -->
+        <button id="saveBtn" class="btn-success" disabled>💾 다른 이름으로 저장</button>
+    </div>
+
+    <div class="control-panel">
+         <!-- 단어 추가 영역 -->
+        <div class="input-group">
+            <input type="text" id="newWordInput" placeholder="추가할 단어를 입력하세요" disabled>
+            <button id="addBtn" class="btn-primary" disabled>추가</button>
+        </div>
+    </div>
+
+    <div id="status">파일을 열어주세요.</div>
+
+    <div id="wordListContainer" class="word-list">
+        <!-- 단어들이 여기에 표시됩니다 -->
+    </div>
+</div>
+
+<script>
+    let currentWords = [];
+
+    const fileInput = document.getElementById('fileInput');
+    const wordListContainer = document.getElementById('wordListContainer');
+    const newWordInput = document.getElementById('newWordInput');
+    const addBtn = document.getElementById('addBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const statusMsg = document.getElementById('status');
+
+    // 1. 파일 업로드 처리
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const json = JSON.parse(e.target.result);
+                if (json.words && Array.isArray(json.words)) {
+                    currentWords = json.words;
+                    renderList();
+                    enableControls();
+                    updateStatus(`총 ${currentWords.length}개의 단어가 로드되었습니다.`);
+                } else {
+                    alert("올바른 형식이 아닙니다. {'words': []} 형식이 필요합니다.");
+                }
+            } catch (error) {
+                alert("JSON 파일을 읽는 중 오류가 발생했습니다: " + error.message);
+            }
+        };
+        reader.readAsText(file);
+        // 같은 파일을 다시 열 수 있도록 초기화
+        fileInput.value = '';
+    });
+
+    // 2. 리스트 렌더링
+    function renderList() {
+        wordListContainer.innerHTML = '';
+        currentWords.forEach(word => {
+            const span = document.createElement('span');
+            span.className = 'word-item';
+            span.textContent = word;
+            // 중복 검사를 위해 데이터 속성에 단어 저장
+            span.dataset.word = word;
+            wordListContainer.appendChild(span);
+        });
+    }
+
+    // 3. 단어 추가 및 중복 검사
+    function addNewWord() {
+        const rawValue = newWordInput.value.trim();
+        
+        if (!rawValue) {
+            alert("단어를 입력해주세요.");
+            return;
+        }
+
+        // 이미 존재하는지 검사
+        if (currentWords.includes(rawValue)) {
+            alert(`'${rawValue}'(은)는 이미 존재하는 단어입니다.`);
+            highlightDuplicate(rawValue);
+            return;
+        }
+
+        // 존재하지 않으면 추가
+        currentWords.push(rawValue);
+        renderList();
+        newWordInput.value = '';
+        updateStatus(`'${rawValue}' 추가됨. (총 ${currentWords.length}개)`);
+        
+        // 스크롤을 맨 아래로
+        wordListContainer.scrollTop = wordListContainer.scrollHeight;
+    }
+
+    // 중복 단어 강조 표시 함수
+    function highlightDuplicate(word) {
+        // 기존 하이라이트 제거
+        const existingHighlights = wordListContainer.querySelectorAll('.duplicate-error');
+        existingHighlights.forEach(el => el.classList.remove('duplicate-error'));
+
+        // 해당 단어를 가진 요소 찾기
+        const targets = wordListContainer.querySelectorAll(`.word-item`);
+        for (let target of targets) {
+            if (target.dataset.word === word) {
+                target.classList.add('duplicate-error');
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // 3초 후 하이라이트 자동 제거 (선택사항)
+                setTimeout(() => {
+                    target.classList.remove('duplicate-error');
+                }, 3000);
+                break; // 첫 번째 일치 항목만 강조
+            }
+        }
+    }
+
+    // 4. JSON 저장
+    function saveJson() {
+        if (currentWords.length === 0) {
+            alert("저장할 데이터가 없습니다.");
+            return;
+        }
+
+        const data = {
+            words: currentWords
+        };
+        
+        const jsonString = JSON.stringify(data, null, 2); // 보기 좋게 들여쓰기 적용
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        // 현재 날짜시간을 파일명에 포함
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.download = `words_data_${timestamp}.json`;
+        document.body.appendChild(a);
+        a.click();
+        
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // 유틸리티 함수들
+    function enableControls() {
+        newWordInput.disabled = false;
+        addBtn.disabled = false;
+        saveBtn.disabled = false;
+    }
+
+    function updateStatus(msg) {
+        statusMsg.textContent = msg;
+    }
+
+    // 이벤트 리스너 연결
+    addBtn.addEventListener('click', addNewWord);
+    newWordInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addNewWord();
+        }
+    });
+    saveBtn.addEventListener('click', saveJson);
+
+</script>
+</body>
+</html>
