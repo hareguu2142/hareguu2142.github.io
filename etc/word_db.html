@@ -82,6 +82,10 @@
         }
         .btn-upload:hover { background-color: #ffc600; }
 
+        /* 삭제 버튼 */
+        .btn-danger { background-color: var(--highlight-color); }
+        .btn-danger:hover { background-color: #e03558; }
+
         /* 실제 파일 인풋 숨기기 */
         #fileInput { display: none; }
 
@@ -110,10 +114,20 @@
             border-radius: 20px;
             font-size: 14px;
             border: 1px solid #dce6f7;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
         }
 
-        /* 중복 강조 스타일 */
+        /* 선택 하이라이트 */
+        .word-item.selected {
+            background-color: #fff1f3;
+            color: var(--highlight-color);
+            border-color: var(--highlight-color);
+            box-shadow: 0 0 0 2px rgba(255,56,96,0.15) inset;
+        }
+
+        /* 중복 오류 하이라이트 */
         .word-item.duplicate-error {
             background-color: var(--highlight-color) !important;
             color: white !important;
@@ -152,6 +166,9 @@
             <input type="text" id="newWordInput" placeholder="추가할 단어를 입력하세요" disabled>
             <button id="addBtn" class="btn-primary" disabled>추가</button>
         </div>
+
+        <!-- 선택 삭제 버튼 -->
+        <button id="deleteBtn" class="btn-danger" disabled>🗑️ 선택 삭제</button>
     </div>
 
     <div id="status">파일을 열어주세요.</div>
@@ -163,11 +180,13 @@
 
 <script>
     let currentWords = [];
+    let selectedIndex = null; // 현재 선택된 단어의 인덱스
 
     const fileInput = document.getElementById('fileInput');
     const wordListContainer = document.getElementById('wordListContainer');
     const newWordInput = document.getElementById('newWordInput');
     const addBtn = document.getElementById('addBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
     const saveBtn = document.getElementById('saveBtn');
     const statusMsg = document.getElementById('status');
 
@@ -183,6 +202,7 @@
                 if (json.words && Array.isArray(json.words)) {
                     currentWords = json.words;
                     renderList();
+                    clearSelection();
                     enableControls();
                     updateStatus(`총 ${currentWords.length}개의 단어가 로드되었습니다.`);
                 } else {
@@ -200,14 +220,58 @@
     // 2. 리스트 렌더링
     function renderList() {
         wordListContainer.innerHTML = '';
-        currentWords.forEach(word => {
+        currentWords.forEach((word, idx) => {
             const span = document.createElement('span');
             span.className = 'word-item';
             span.textContent = word;
-            // 중복 검사를 위해 데이터 속성에 단어 저장
+            // 중복 강조 및 선택 관리를 위한 데이터 속성
             span.dataset.word = word;
+            span.dataset.index = idx;
+            span.title = "클릭하여 선택";
             wordListContainer.appendChild(span);
         });
+    }
+
+    // 2-1. 항목 클릭(선택/해제)
+    wordListContainer.addEventListener('click', function(e) {
+        const item = e.target.closest('.word-item');
+        if (item) {
+            const idx = Number(item.dataset.index);
+            // 같은 항목을 다시 클릭하면 선택 해제
+            if (selectedIndex === idx) {
+                clearSelection();
+            } else {
+                selectWord(idx);
+            }
+        } else {
+            // 빈 공간 클릭 시 선택 해제
+            clearSelection();
+        }
+    });
+
+    function selectWord(idx) {
+        clearSelection(false); // 기존 선택만 제거
+        selectedIndex = idx;
+        const target = wordListContainer.querySelector(`.word-item[data-index="${idx}"]`);
+        if (target) {
+            target.classList.add('selected');
+            target.setAttribute('aria-selected', 'true');
+        }
+        deleteBtn.disabled = false;
+        updateStatus(`'${currentWords[idx]}' 선택됨. 삭제하려면 🗑️ 선택 삭제 버튼을 클릭하세요.`);
+    }
+
+    function clearSelection(updateMsg = true) {
+        selectedIndex = null;
+        wordListContainer.querySelectorAll('.word-item.selected')
+            .forEach(el => {
+                el.classList.remove('selected');
+                el.removeAttribute('aria-selected');
+            });
+        deleteBtn.disabled = true;
+        if (updateMsg) {
+            // 상태 메시지는 유지하거나 필요 시 갱신
+        }
     }
 
     // 3. 단어 추가 및 중복 검사
@@ -219,7 +283,7 @@
             return;
         }
 
-        // 이미 존재하는지 검사
+        // 이미 존재하는지 검사 (대소문자 구분)
         if (currentWords.includes(rawValue)) {
             alert(`'${rawValue}'(은)는 이미 존재하는 단어입니다.`);
             highlightDuplicate(rawValue);
@@ -230,6 +294,7 @@
         currentWords.push(rawValue);
         renderList();
         newWordInput.value = '';
+        clearSelection();
         updateStatus(`'${rawValue}' 추가됨. (총 ${currentWords.length}개)`);
         
         // 스크롤을 맨 아래로
@@ -249,7 +314,7 @@
                 target.classList.add('duplicate-error');
                 target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 
-                // 3초 후 하이라이트 자동 제거 (선택사항)
+                // 3초 후 하이라이트 자동 제거
                 setTimeout(() => {
                     target.classList.remove('duplicate-error');
                 }, 3000);
@@ -265,10 +330,7 @@
             return;
         }
 
-        const data = {
-            words: currentWords
-        };
-        
+        const data = { words: currentWords };
         const jsonString = JSON.stringify(data, null, 2); // 보기 좋게 들여쓰기 적용
         const blob = new Blob([jsonString], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -285,11 +347,24 @@
         URL.revokeObjectURL(url);
     }
 
+    // 5. 단어 삭제
+    function deleteSelectedWord() {
+        if (selectedIndex === null) {
+            alert("삭제할 단어를 먼저 선택하세요.");
+            return;
+        }
+        const removed = currentWords.splice(selectedIndex, 1)[0];
+        renderList();
+        clearSelection();
+        updateStatus(`'${removed}' 삭제됨. (총 ${currentWords.length}개)`);
+    }
+
     // 유틸리티 함수들
     function enableControls() {
         newWordInput.disabled = false;
         addBtn.disabled = false;
         saveBtn.disabled = false;
+        deleteBtn.disabled = true; // 선택 전까지는 비활성화
     }
 
     function updateStatus(msg) {
@@ -303,8 +378,8 @@
             addNewWord();
         }
     });
+    deleteBtn.addEventListener('click', deleteSelectedWord);
     saveBtn.addEventListener('click', saveJson);
-
 </script>
 </body>
 </html>
