@@ -161,11 +161,11 @@
     <div class="grid">
       <div class="note">
         <div><b>총 수업료</b>: <span id="totalTuition2">-</span></div>
-        <div><b>수용비(4~5%) 범위</b>: <span id="facilityRange">-</span></div>
+        <div><b>수용비(0~5%) 범위</b>: <span id="facilityRange">-</span></div>
       </div>
       <div>
-        <label>수용비율 선택 (4% ~ 5%)</label>
-        <input type="range" id="facilityPct" min="4" max="5" step="0.01" value="4.5" style="width:100%">
+        <label>수용비율 선택 (0% ~ 5%)</label>
+        <input type="range" id="facilityPct" min="0" max="5" step="0.01" value="4.5" style="width:100%">
         <div class="muted">현재: <b><span id="facilityPctLabel">4.50%</span></b> → 수용비 총액: <b><span id="facilityTotal">-</span></b></div>
       </div>
     </div>
@@ -779,7 +779,7 @@ function initDiscounts(){
 
 function updateFacilityWidgets(){
   document.querySelector('#totalTuition2').textContent = fmt(state.totalTuition);
-  const min = 0.04*state.totalTuition;
+  const min = 0;
   const max = 0.05*state.totalTuition;
   document.querySelector('#facilityRange').textContent = `${fmt(min)} ~ ${fmt(max)}`;
   document.querySelector('#facilityPctLabel').textContent = state.facilityPct.toFixed(2)+"%";
@@ -970,6 +970,5 @@ bootstrap();
 </script>
 </body>
 </html>
-
 
 
