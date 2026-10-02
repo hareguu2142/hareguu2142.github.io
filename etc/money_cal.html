@@ -52,7 +52,7 @@
 <body>
 <header>
   <h1>방과후 정산 도우미</h1>
-  <div class="sub">과목·학생 CSV를 넣고, 수강료/할인/수용비까지 한 번에 계산하세요. <span class="badge" id="saveBadge" style="display:none">자동 저장됨</span></div>
+  <div class="sub">과목·학생 CSV를 넣고, 수강료/지원금/수용비까지 한 번에 계산하세요. <span class="badge" id="saveBadge" style="display:none">자동 저장됨</span></div>
 </header>
 
 <div class="container">
@@ -60,7 +60,7 @@
     <button class="tab-btn active" data-tab="1">1) 과목 입력</button>
     <button class="tab-btn" data-tab="2" disabled>2) 학생/CSV</button>
     <button class="tab-btn" data-tab="3" disabled>3) 수강료 배분</button>
-    <button class="tab-btn" data-tab="4" disabled>4) 할인 · 수용비</button>
+    <button class="tab-btn" data-tab="4" disabled>4) 지원 · 수용비</button>
     <button class="tab-btn" data-tab="5" disabled>5) 결산</button>
   </div>
 
@@ -137,8 +137,8 @@
   <section id="tab-3" class="card" style="display:none">
     <div class="row">
       <div class="note">
-        <div><b>총 수업료(100원 반올림 기준)</b>: <span id="totalTuition">-</span></div>
-        <div class="small">배분 로직: 학생별 <b>수강 총시간</b>(수강 과목들의 ‘총 수업시간’ 합)에 비례해 <b>총 수업료</b>를 분배합니다. 각 학생의 오른쪽 ‘수강료’는 100원 단위로 반올림되며, <b>라지스트 리마인더 방식</b>으로 총액과 정확히 일치하도록 보정됩니다.</div>
+        <div><b>수강료 합계</b>: <span id="totalTuition">-</span></div>
+        <div class="small">배분 로직: 수강 총시간에 비례해 배분한 뒤, 학생별 단가를 가장 가까운 100원으로 조정합니다. 같은 과목 구성이면 같은 단가를 적용합니다.</div>
       </div>
     </div>
 
@@ -166,20 +166,20 @@
       <div>
         <label>수용비율 선택 (0% ~ 5%)</label>
         <input type="range" id="facilityPct" min="0" max="5" step="0.01" value="4.5" style="width:100%">
-        <div class="muted">현재: <b><span id="facilityPctLabel">4.50%</span></b> → 수용비 총액: <b><span id="facilityTotal">-</span></b></div>
+        <div class="muted">현재: <b><span id="facilityPctLabel">4.50%</span></b> → 산출 수용비 총액: <b><span id="facilityTotal">-</span></b></div>
       </div>
     </div>
 
     <div class="spacer"></div>
     <div class="row">
       <div>
-        <label>할인율 일괄입력 (0~1)</label>
+        <label>지원율 일괄입력 (0~1)</label>
         <div class="row">
           <input type="number" id="bulkDiscount" value="0" min="0" max="1" step="0.01">
           <button class="btn ghost" id="applyBulk">모두 적용</button>
         </div>
       </div>
-      <div class="muted">할인율 1(=100% 할인) 학생은 수용비 분담에서 제외됩니다.</div>
+      <div class="muted">모든 수강생을 포함해 수용비를 산출합니다. 지원율 1인 학생의 수용비는 지원금으로 충당하며, 부분 지원 학생은 수용비를 본인이 부담합니다.</div>
     </div>
 
     <div class="table-scroll sticky-head">
@@ -188,10 +188,10 @@
           <tr>
             <th>학번</th><th>이름</th>
             <th>수강료(100원)</th>
-            <th>할인율</th>
-            <th>할인 후 수강료(100원)</th>
+            <th>지원율</th>
+            <th>본인 부담 수강료(100원)</th>
             <th>지원금액</th>
-            <th>수용비 배분(100원)</th>
+            <th>본인 부담 수용비(100원)</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -217,10 +217,10 @@
   <section id="tab-5" class="card" style="display:none">
     <div class="row">
       <div class="note">
-        <div><b>총 수업료(100원 반올림 기준)</b>: <span id="sumTotalTuition3">-</span>
+        <div><b>수강료 합계</b>: <span id="sumTotalTuition3">-</span>
           <span class="badge" id="memoBadge" style="display:none"></span>
         </div>
-        <div><b>선택한 수용비 총액</b>: <span id="sumFacilityPool">-</span></div>
+        <div><b>산출 수용비 총액(지원금 충당분 포함)</b>: <span id="sumFacilityPool">-</span></div>
       </div>
     </div>
 
@@ -230,10 +230,10 @@
           <tr>
             <th>학번</th><th>이름</th>
             <th>수강료(100원)</th>
-            <th>할인율</th>
-            <th>할인 후 수강료(100원)</th>
+            <th>지원율</th>
+            <th>본인 부담 수강료(100원)</th>
             <th>지원금액</th> <!-- ✅ 추가 -->
-            <th>수용비(100원)</th>
+            <th>본인 부담 수용비(100원)</th>
             <th>최종 납부액</th>
           </tr>
         </thead>
@@ -257,7 +257,7 @@
       <button class="btn" onclick="window.print()">인쇄</button>
     </div>
     <div class="note small">
-      ※ 수강료/수용비는 100원 단위 반올림 및 총액 보정(라지스트 리마인더 방식)으로 분배됩니다. 학생별 과목 교차 셀은 학생의 전체 수강료를 <b>해당 학생이 수강한 과목의 총시간 비율</b>로 분해한 표기이며, 과목별 열 합계가 과목 총비용과 일치하지 않을 수 있습니다.
+      ※ 같은 과목 구성의 학생은 지원금액 + 최종 납부액이 같습니다. 수강료와 산출 수용비 단가는 가장 가까운 100원으로 조정합니다. 전액 지원 학생의 산출 수용비는 지원금에 포함되어 본인 부담 수용비가 0원입니다.<br> 학생별 과목 교차 셀은 학생의 전체 수강료를 <b>해당 학생이 수강한 과목의 총시간 비율</b>로 분해한 표기이며, 과목별 열 합계가 과목 총비용과 일치하지 않을 수 있습니다.
     </div>
   </section>
 </div>
@@ -273,10 +273,10 @@ const state = {
   students: [], // {id, name, takes: { [subjectName]: true/false }, uid}
   // computed:
   totalTuition: 0,              // 원금(반올림 전)
-  totalTuitionRounded: 0,       // 100원 반올림 기준 목표액
+  totalTuitionRounded: 0,       // 학생별 100원 단가 조정 후 합계
   hoursByStudent: [],           // H_i
   baseFeeRaw: [],               // unrounded
-  baseFeeRounded: [],           // 100원 반올림 + 라지스트 리마인더 보정
+  baseFeeRounded: [],           // 학생별 가장 가까운 100원 단가
   perCellAlloc: [],             // [{ subjName: amount, ... }]
   discounts: [],                // per student 0..1
   facilityPct: 4.5,             // %
@@ -296,6 +296,7 @@ const STORAGE_KEY = 'afs_progress_v1';
 window.__csvCache = null; // {headers, rows}
 
 function switchTab(n){
+  if(n===5 && state.students.length) renderFinalTable();
   document.querySelectorAll('.tab-btn').forEach(b=>{
     const active = +b.dataset.tab===n;
     b.classList.toggle('active', active);
@@ -662,52 +663,28 @@ function computeAllocations(){
   });
   state.perCellAlloc = perCell;
 
-  // 100원 반올림 + 라지스트 리마인더 보정
-  const initialRounded = baseRaw.map(r100);
-  const target = state.totalTuitionRounded;
-  const lrm = largestRemainderHundreds(baseRaw, initialRounded, target);
-  state.baseFeeRounded = lrm;
+  // 동일한 수강 구성의 단가를 유지: 총액 보정을 학생별로 적용하지 않는다.
+  state.baseFeeRounded = baseRaw.map(r100);
+  state.totalTuitionRounded = state.baseFeeRounded.reduce((a,b)=>a+b,0);
 }
 
-function largestRemainderHundreds(rawVals, roundedVals, targetSum){
-  const out = roundedVals.slice();
-  let diff = targetSum - out.reduce((a,b)=>a+b,0);
-  if(diff === 0) return out;
-  const infos = rawVals.map((v,i)=>({
-    i,
-    frac: (v/100 - Math.floor(v/100)),
-    positive: v>0
-  }));
-  if(diff>0){
-    // 가장 큰 소수부부터 +100
-    infos.sort((a,b)=> b.frac - a.frac);
-    for(let k=0; k<infos.length && diff>0; k++){
-      const {i, positive} = infos[k];
-      if(!positive) continue;
-      out[i]+=100; diff-=100;
-    }
-    // 남으면 순환
-    let idx=0;
-    while(diff>0 && infos.length){
-      const {i, positive} = infos[idx % infos.length];
-      if(positive){ out[i]+=100; diff-=100; }
-      idx++;
-    }
-  }else{
-    // 가장 작은 소수부부터 -100 (0 미만 금지)
-    infos.sort((a,b)=> a.frac - b.frac);
-    for(let k=0; k<infos.length && diff<0; k++){
-      const {i} = infos[k];
-      if(out[i]>=100){ out[i]-=100; diff+=100; }
-    }
-    let idx=0;
-    while(diff<0 && infos.length){
-      const {i} = infos[idx % infos.length];
-      if(out[i]>=100){ out[i]-=100; diff+=100; }
-      idx++;
-    }
-  }
-  return out;
+// 수용비 산출과 실제 학생 부담을 구분한다.
+function settlementFor(i){
+  const base = state.baseFeeRounded[i] || 0;
+  const disc = state.discountedFee[i] || 0;
+  const allocatedFacility = state.facilityAlloc[i] || 0;
+  const facilitySupport = state.discounts[i]===1 ? allocatedFacility : 0;
+  const fac = allocatedFacility - facilitySupport;
+  const support = base - disc + facilitySupport;
+  return {base, disc, fac, support, facilitySupport, final: disc + fac};
+}
+
+function computeFacilityAllocations(){
+  // 지원율과 무관하게 기존 수강시간 가중치를 사용한다.
+  const totalHours = state.hoursByStudent.reduce((a,b)=>a+b,0);
+  const poolRaw = state.totalTuition * state.facilityPct/100;
+  state.facilityAlloc = state.hoursByStudent.map(h=>r100(totalHours>0 ? poolRaw*h/totalHours : 0));
+  state.facilityPool = state.facilityAlloc.reduce((a,b)=>a+b,0);
 }
 
 function renderAllocTable(){
@@ -752,7 +729,7 @@ function renderAllocTable(){
 document.querySelector('#back3').addEventListener('click', ()=>switchTab(3));
 document.querySelector('#applyBulk').addEventListener('click', ()=>{
   const v = +document.querySelector('#bulkDiscount').value;
-  if(!(v>=0 && v<=1)){ alert("할인율은 0~1 사이로 입력하세요."); return; }
+  if(!(v>=0 && v<=1)){ alert("지원율은 0~1 사이로 입력하세요."); return; }
   state.discounts = state.discounts.map(()=>v);
   renderDiscountTable();
   saveProgress();
@@ -783,8 +760,8 @@ function updateFacilityWidgets(){
   const max = 0.05*state.totalTuition;
   document.querySelector('#facilityRange').textContent = `${fmt(min)} ~ ${fmt(max)}`;
   document.querySelector('#facilityPctLabel').textContent = state.facilityPct.toFixed(2)+"%";
-  const poolRaw = state.totalTuition * state.facilityPct/100;
-  document.querySelector('#facilityTotal').textContent = fmt(poolRaw);
+  computeFacilityAllocations();
+  document.querySelector('#facilityTotal').textContent = fmt(state.facilityPool);
 }
 
 function renderDiscountTable(){
@@ -793,43 +770,13 @@ function renderDiscountTable(){
 }
 
 function recomputeFacility(){
-  const pool = r100(state.totalTuition * state.facilityPct/100);
-  state.facilityPool = pool;
-
-  const weights = state.discountedFee.map((df,i)=> (state.discounts[i]===1 ? 0 : df));
-  const W = weights.reduce((a,b)=>a+b,0);
-  const rawShares = weights.map(w=> W>0 ? (pool * (w/W)) : 0);
-
-  const rounded = rawShares.map(r100);
-  let diff = pool - rounded.reduce((a,b)=>a+b,0);
-
-  if(Math.abs(diff)>=100){
-    const rema = rawShares.map((r,i)=> ({i, frac: (r/100 - Math.floor(r/100))}));
-    if(diff>0){
-      rema.sort((a,b)=> b.frac - a.frac);
-      for(let k=0; k<rema.length && diff>0; k++){
-        const i = rema[k].i;
-        if(weights[i]===0) continue;
-        rounded[i]+=100; diff-=100;
-      }
-    }else if(diff<0){
-      rema.sort((a,b)=> a.frac - b.frac);
-      for(let k=0; k<rema.length && diff<0; k++){
-        const i = rema[k].i;
-        if(rounded[i]===0) continue;
-        rounded[i]-=100; diff+=100;
-      }
-    }
-  }
-  state.facilityAlloc = rounded;
+  computeFacilityAllocations();
+  updateFacilityWidgets();
 
   // 표 렌더링 (지원금액 추가)
   const tbody = document.querySelector('#discountTable tbody');
   tbody.innerHTML = state.students.map((st,i)=>{
-    const base = state.baseFeeRounded[i];
-    const disc = state.discountedFee[i];
-    const support = base - disc; // ✅ 지원금액 = 수강료(100원) - 할인 후 수강료(100원)
-    const fac = state.facilityAlloc[i];
+    const {base, disc, support, fac} = settlementFor(i);
     return `
       <tr>
         <td>${st.id||""}</td>
@@ -849,7 +796,7 @@ function recomputeFacility(){
     inp.addEventListener('change', (e)=>{
       const i = +e.target.dataset.di;
       let v = +e.target.value;
-      if(!(v>=0 && v<=1)){ alert("할인율은 0~1 사이로 입력하세요."); e.target.value = state.discounts[i]; return; }
+      if(!(v>=0 && v<=1)){ alert("지원율은 0~1 사이로 입력하세요."); e.target.value = state.discounts[i]; return; }
       state.discounts[i]=v;
       renderDiscountTable();
       saveProgress();
@@ -858,9 +805,8 @@ function recomputeFacility(){
 
   // 하단 합계(할인 후 수강료 / 지원금액 / 수용비)
   const sumDisc = state.discountedFee.reduce((a,b)=>a+b,0);
-  const sumBase = state.baseFeeRounded.reduce((a,b)=>a+b,0);
-  const sumSupport = sumBase - sumDisc;
-  const sumFac = state.facilityAlloc.reduce((a,b)=>a+b,0);
+  const sumSupport = state.students.reduce((a,_,i)=>a+settlementFor(i).support,0);
+  const sumFac = state.students.reduce((a,_,i)=>a+settlementFor(i).fac,0);
 
   document.querySelector('#sumDiscFee').textContent = fmt(sumDisc);
   document.querySelector('#sumSupport').textContent = fmt(sumSupport);
@@ -871,17 +817,14 @@ function recomputeFacility(){
 /* ---------- TAB5: Final ---------- */
 function renderFinalTable(){
   document.querySelector('#sumTotalTuition3').textContent = fmt(state.totalTuitionRounded);
+  renderDiscountTable();
   document.querySelector('#sumFacilityPool').textContent = fmt(state.facilityPool);
   const mb = document.querySelector('#memoBadge');
   if(state.memo){ mb.style.display="inline-block"; mb.textContent = state.memo; }
 
   const tbody = document.querySelector('#finalTable tbody');
   tbody.innerHTML = state.students.map((st,i)=>{
-    const base = state.baseFeeRounded[i];
-    const disc = state.discountedFee[i];
-    const support = base - disc;           // ✅ 지원금액
-    const fac = state.facilityAlloc[i];
-    const final = disc + fac;
+    const {base, disc, support, fac, final} = settlementFor(i);
     return `
       <tr>
         <td>${st.id||""}</td>
@@ -898,8 +841,8 @@ function renderFinalTable(){
 
   const sumBase    = state.baseFeeRounded.reduce((a,b)=>a+b,0);
   const sumDisc    = state.discountedFee.reduce((a,b)=>a+b,0);
-  const sumSupport = sumBase - sumDisc;                      // ✅ 지원금액 합계
-  const sumFac     = state.facilityAlloc.reduce((a,b)=>a+b,0);
+  const sumSupport = state.students.reduce((a,_,i)=>a+settlementFor(i).support,0);                      // ✅ 지원금액 합계
+  const sumFac     = state.students.reduce((a,_,i)=>a+settlementFor(i).fac,0);
   const sumFinal   = sumDisc + sumFac;
 
   document.querySelector('#ftSumBase').textContent     = fmt(sumBase);
@@ -913,13 +856,9 @@ function renderFinalTable(){
 /* ---------- Export CSV ---------- */
 document.querySelector('#exportCSV').addEventListener('click', ()=>{
   // ✅ 최종 결산 CSV 헤더에 '지원금액' 추가
-  const header = ["학번","이름","수강료(100원)","할인율","할인 후 수강료(100원)","지원금액","수용비(100원)","최종 납부액"];
+  const header = ["학번","이름","수강료(100원)","지원율","본인 부담 수강료(100원)","지원금액","본인 부담 수용비(100원)","최종 납부액"];
   const rows = state.students.map((st,i)=>{
-    const base    = state.baseFeeRounded[i];
-    const disc    = state.discountedFee[i];
-    const support = base - disc;                  // ✅ 지원금액
-    const fac     = state.facilityAlloc[i];
-    const final   = disc + fac;
+    const {base, disc, support, fac, final} = settlementFor(i);
     return [
       st.id, st.name,
       base,
@@ -970,5 +909,4 @@ bootstrap();
 </script>
 </body>
 </html>
-
 
